@@ -27,6 +27,8 @@ export class ECSManager {
 
   private prevRun: number;
 
+  public constructor() {}
+
   public registerEvent<T extends ComponentIdentifier>(
     system: SystemFn<Event>,
     query: EscQuery)
@@ -148,7 +150,7 @@ export class ECSManager {
     return result;
   }
 
-  private createArgs(entry: EntityEntry) {
+  private createArgs(entry: EntityEntry): Component<any>[] {
     const args = [];
     for (const component of entry.components) {
       const argComp = this.components.get(component[0])[component[1]];
