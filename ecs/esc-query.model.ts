@@ -1,11 +1,10 @@
-import {Entity} from './entity.model';
 
 export interface ComponentQueryResult {
   entities: EntityEntry[];
 }
 
 export interface EntityEntry {
-  entity: Entity;
+  id: number;
   components: Map<string, number>;
 }
 

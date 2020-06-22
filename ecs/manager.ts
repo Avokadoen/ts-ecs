@@ -4,6 +4,11 @@ import {Component} from './component.model';
 import {EscQuery, ComponentQueryResult, QueryToken, QueryNode, EntityEntry} from './esc-query.model';
 import {ComponentIdentifier} from './component-identifier.model';
 
+// TODO: currently does not support multiple components of same type on one entity
+//        - this silently fails when you add same type again, no error, memory leak created, queries broken
+// TODO: All query results must be invalidated on change in entity/component
+// TODO: Event handling requires callee to keep relevant index to event. This should be encapsulated to reduce errors
+
 export class EntityBuilder {
   constructor(private id: number, private ecsManager: ECSManager) {}
 
@@ -20,7 +25,6 @@ export class ECSManager {
   private events: System<Event>[] = [];
   private systems: System<number>[] = [];
   private entities: Entity[] = [];
-  // TODO: no idea what notation to say Component<T>[], so I use any[] for now
   private components = new Map<string, Component<Object>[]>();
 
   private entityId = 0;
@@ -64,7 +68,7 @@ export class ECSManager {
     return new EntityBuilder(this.entityId - 1, this);
   }
 
-  // TODO: update relevant systems query results
+  // TODO: update relevant systems query results (see top todo)
   public addComponent<T extends ComponentIdentifier>(entityId: number, component: T): EntityBuilder {
     const compName = component.identifier();
     if (!this.components.has(compName)) {
@@ -95,7 +99,7 @@ export class ECSManager {
           const biggest = (thisResult.length >= result.length) ? thisResult : result;
           result = [];
           for (const r of least) {
-            if (biggest.find(b => b === r)) {
+            if (biggest.find(b => b.id === r.id)) {
               result.push(r);
             }
           }
@@ -109,7 +113,6 @@ export class ECSManager {
           }, []);
           break;
       }
-
     }
 
     return result;
@@ -134,15 +137,15 @@ export class ECSManager {
       for (const entity of entities) {
         const compIndex = this.components.get(cId).findIndex(c => c.entityId === entity.id);
         if (compIndex >= 0) {
-          let indexOf = result.entities.findIndex(entry => entry.entity.id === entity.id);
+          let indexOf = result.entities.findIndex(entry => entry.id === entity.id);
           if (indexOf === -1) {
             result.entities.push({
-              entity,
+              id: entity.id,
               components: new Map<string, number>()
             });
             indexOf = result.entities.length - 1;
           }
-          result.entities.find(entry => entry.entity.id === entity.id).components.set(cId, compIndex);
+          result.entities.find(entry => entry.id === entity.id).components.set(cId, compIndex);
         }
       }
     }
