@@ -1,6 +1,6 @@
 {
   "name": "naive-ts-ecs",
-  "version": "1.0.9-rc-4",
+  "version": "1.0.9-rc-5",
   "description": "A naive implementation of ECS pattern",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
