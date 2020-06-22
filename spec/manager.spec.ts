@@ -29,7 +29,7 @@ class TestCompThree implements ComponentIdentifier {
 }
 
 class TestCompFour implements ComponentIdentifier {
-    static readonly identifier = 'TestComp3';
+    static readonly identifier = 'TestComp4';
 
     constructor(public someState: number) { }
 
@@ -141,6 +141,23 @@ describe('Query Entities', () => {
             .toEqual([{ id: 3 }, { id: 5 }], "Query returned unexpected result");
     });
 
+    it('Should succeed on "AND" any order', () => {
+        const query = [
+            {
+                componentIdentifier: TestCompThree.identifier,
+                token: QueryToken.FIRST
+            },
+            {
+                componentIdentifier: TestCompOne.identifier,
+                token: QueryToken.AND
+            },
+        ];
+
+
+        expect(manager.queryEntities(query).sort(sortFn))
+            .toEqual([{ id: 3 }, { id: 5 }], "Query returned unexpected result");
+    });
+
     it('Should succeed on "OR" comp query entity', () => {
         const query = [
             {
@@ -157,6 +174,55 @@ describe('Query Entities', () => {
         expect(manager.queryEntities(query).sort(sortFn))
             .toEqual([{ id: 2 }, { id: 3 }, { id: 4 }, { id: 5 }], "Query returned unexpected result");
     });
+
+    describe('Bigger data set', () => {
+        const _manager = new ECSManager();
+
+        for (let i = 0; i < 100; i++) {
+            _manager.createEntity()
+                .addComponent(new TestCompFour(i))
+                .addComponent(new TestCompOne())
+                .addComponent(new TestCompTwo());
+        }
+
+        it('Should find all entities meeting requirement', () => {
+            const query = [
+                {
+                    componentIdentifier: TestCompOne.identifier,
+                    token: QueryToken.FIRST
+                },
+                {
+                    componentIdentifier: TestCompFour.identifier,
+                    token: QueryToken.AND
+                },
+            ];
+
+            const result = _manager.queryEntities(query);
+
+            expect(result.length).toBe(100, "Query returned unexpected result");
+        });
+
+        it('Should filter all entities not meeting requirement', () => {
+            const query = [
+                {
+                    componentIdentifier: TestCompOne.identifier,
+                    token: QueryToken.FIRST
+                },
+                {
+                    componentIdentifier: TestCompThree.identifier,
+                    token: QueryToken.AND
+                },
+            ];
+
+            const result = _manager.queryEntities(query);
+
+            expect(result.length).toBe(0, "Query returned unexpected result");
+        });
+
+    });
+
+
+
 });
 
 describe('Query runtime components', () => {
@@ -236,7 +302,7 @@ describe('Systems', () => {
         ];
 
         const testSystem = (_: number, args: Component<TestCompFour>[]) => {
-            const testCompFour = args[0].data as TestCompFour;
+            const testCompFour = args[0].data;
 
             testCompFour.someState += 1;
         };
@@ -265,7 +331,7 @@ describe('Systems', () => {
         ];
 
         const testSystem = (_: Event, args: Component<TestCompFour>[]) => {
-            const testCompFour = args[0].data as TestCompFour;
+            const testCompFour = args[0].data;
 
             testCompFour.someState += 1;
         };

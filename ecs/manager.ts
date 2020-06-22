@@ -8,6 +8,7 @@ import {ComponentIdentifier} from './component-identifier.model';
 //        - this silently fails when you add same type again, no error, memory leak created, queries broken
 // TODO: All query results must be invalidated on change in entity/component
 // TODO: Event handling requires callee to keep relevant index to event. This should be encapsulated to reduce errors
+// TODO: entity id should be defined by callee or generated if not definer. Should fail somehow if taken
 
 export class EntityBuilder {
   constructor(private id: number, private ecsManager: ECSManager) {}
@@ -89,21 +90,27 @@ export class ECSManager {
     };
     let result: Entity[] = [];
     for (const q of query) {
-      const thisResult: Entity[] = this.components.get(q.componentIdentifier).filter(c => !isNaN(c.entityId)).reduce(entityIdReducer, []);
+      const components = this.components.get(q.componentIdentifier);
+
+      const thisResult: Entity[] = components?.filter(c => !isNaN(c.entityId)).reduce(entityIdReducer, []) ?? [];
+
       switch (q.token) {
+
         case QueryToken.FIRST:
           result = thisResult;
           break;
+
         case QueryToken.AND:
           const least = (thisResult.length < result.length) ? thisResult : result;
           const biggest = (thisResult.length >= result.length) ? thisResult : result;
           result = [];
-          for (const r of least) {
-            if (biggest.find(b => b.id === r.id)) {
+          for (const r of biggest) {
+            if (least.find(b => b.id === r.id)) {
               result.push(r);
             }
           }
           break;
+
         case QueryToken.OR:
           result = result.concat(thisResult).reduce((previousValues: Entity[], value: Entity) => {
             if (!previousValues.find(n => n.id === value.id)) {
@@ -112,6 +119,7 @@ export class ECSManager {
             return previousValues;
           }, []);
           break;
+
       }
     }
 
