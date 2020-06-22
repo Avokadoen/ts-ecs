@@ -304,6 +304,12 @@ describe('Query runtime components', () => {
 });
 
 describe('Systems', () => {
+    const testSystem = (_: number, args: Component<TestCompFour>[]) => {
+        const testCompFour = args[0].data;
+
+        testCompFour.someState += 1;
+    };
+
     it('Should mutate component state on dispatch', () => {
         const manager = new ECSManager();
 
@@ -316,12 +322,6 @@ describe('Systems', () => {
                 token: QueryToken.FIRST
             },
         ];
-
-        const testSystem = (_: number, args: Component<TestCompFour>[]) => {
-            const testCompFour = args[0].data;
-
-            testCompFour.someState += 1;
-        };
 
         manager.registerSystem(testSystem, query);
 
@@ -360,5 +360,56 @@ describe('Systems', () => {
         manager.onEvent(index, null);
 
         expect(compFourRef.someState).toBe(4);
+    });
+
+    it('Should update query result on remove', () => {
+        const manager = new ECSManager();
+
+        const compFourRef = new TestCompFour(0);
+        const entityBuilder = manager.createEntity().addComponent(compFourRef);
+
+        const otherCompFourRef = new TestCompFour(0);
+        manager.createEntity().addComponent(otherCompFourRef);
+
+
+        const query = [
+            {
+                componentIdentifier: TestCompFour.identifier,
+                token: QueryToken.FIRST
+            },
+        ];
+
+        manager.registerSystem(testSystem, query);
+
+        entityBuilder.removeComponent(TestCompFour.identifier);
+
+        manager.dispatch();
+        manager.dispatch();
+
+        expect(compFourRef.someState).toBe(0);
+        expect(otherCompFourRef.someState).toBe(2);
+    });
+
+    it('Should update query result on add', () => {
+        const manager = new ECSManager();
+
+        const compFourRef = new TestCompFour(0);
+        const entityBuilder = manager.createEntity();
+
+        const query = [
+            {
+                componentIdentifier: TestCompFour.identifier,
+                token: QueryToken.FIRST
+            },
+        ];
+
+        manager.registerSystem(testSystem, query);
+
+        entityBuilder.addComponent(compFourRef);
+
+        manager.dispatch();
+        manager.dispatch();
+
+        expect(compFourRef.someState).toBe(2);
     });
 });

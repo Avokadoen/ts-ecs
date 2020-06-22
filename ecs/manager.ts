@@ -20,7 +20,11 @@ export class EntityBuilder {
   }
 
   public addComponent<T extends ComponentIdentifier>(component: T): EntityBuilder {
-    return this.ecsManager.addComponent(this.id, component);
+    return this.ecsManager.addComponent(this.id, component, this);
+  }
+
+  public removeComponent(identifier: string): EntityBuilder {
+    return this.ecsManager.removeComponent(this.id, identifier, this);
   }
 }
 
@@ -41,6 +45,7 @@ export class ECSManager {
     query: EscQuery)
     : number {
     this.events.push({
+      query,
       qResult: this.queryComponents(query),
       system
     });
@@ -53,6 +58,7 @@ export class ECSManager {
     query: EscQuery)
     : void {
     this.systems.push({
+      query,
       qResult: this.queryComponents(query),
       system
     });
@@ -72,7 +78,7 @@ export class ECSManager {
   }
 
   // TODO: update relevant systems query results (see top todo)
-  public addComponent<T extends ComponentIdentifier>(entityId: number, component: T): EntityBuilder {
+  public addComponent<T extends ComponentIdentifier>(entityId: number, component: T, builder?: EntityBuilder): EntityBuilder {
     const compName = component.identifier();
     if (!this.components.has(compName)) {
       this.components.set(compName, new Array<Component<typeof compName>>());
@@ -80,7 +86,16 @@ export class ECSManager {
     const actualComponent = {entityId, data: component};
     this.components.get(compName).push(actualComponent);
 
-    return new EntityBuilder(entityId, this);
+    this.invalidateQueryResults();
+    return builder ?? new EntityBuilder(entityId, this);
+  }
+
+  public removeComponent(entityId: number, identifier: string, builder?: EntityBuilder): EntityBuilder {
+    const components = this.components.get(identifier).filter(c => c.entityId !== entityId);
+    this.components.set(identifier, components);
+
+    this.invalidateQueryResults();
+    return builder ?? new EntityBuilder(entityId, this);
   }
 
   public queryEntities(query: EscQuery): Entity[] {
@@ -167,18 +182,6 @@ export class ECSManager {
 
     return result;
   }
-
-  // TODO: this probably causes GC spikes
-  private createArgs(entry: EntityEntry): Component<Object>[] {
-    const args = [];
-    for (const component of entry.components) {
-      const argComp = this.components.get(component[0])[component[1]];
-      args.push(argComp);
-    }
-
-    return args;
-  }
-
   public onEvent(index: number, event: Event) {
     for (const entity of this.events[index].qResult.entities) {
       const args = this.createArgs(entity);
@@ -201,5 +204,23 @@ export class ECSManager {
 
 
     this.prevRun = now;
+  }
+
+  // TODO: this probably causes GC spikes
+  private createArgs(entry: EntityEntry): Component<Object>[] {
+    const args = [];
+    for (const component of entry.components) {
+      const argComp = this.components.get(component[0])[component[1]];
+      args.push(argComp);
+    }
+
+    return args;
+  }
+
+  // TODO: this can be optimized!
+  private invalidateQueryResults(): void {
+    for (const system of this.systems) {
+      system.qResult = this.queryComponents(system.query);
+    }
   }
 }
