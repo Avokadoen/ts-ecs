@@ -14,6 +14,7 @@ export enum QueryToken {
   FIRST,
   AND,
   OR,
+  AND_NOT,
 }
 
 export interface QueryNode {

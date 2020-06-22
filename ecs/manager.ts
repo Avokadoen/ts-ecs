@@ -1,7 +1,7 @@
 import {System, SystemFn} from './system.model';
 import {Entity} from './entity.model';
 import {Component} from './component.model';
-import {EscQuery, ComponentQueryResult, QueryToken, QueryNode, EntityEntry} from './esc-query.model';
+import {ComponentQueryResult, EntityEntry, EscQuery, QueryNode, QueryToken} from './esc-query.model';
 import {ComponentIdentifier} from './component-identifier.model';
 
 // TODO: currently does not support multiple components of same type on one entity
@@ -88,6 +88,7 @@ export class ECSManager {
       }
       return previousValues;
     };
+
     let result: Entity[] = [];
     for (const q of query) {
       const components = this.components.get(q.componentIdentifier);
@@ -120,6 +121,10 @@ export class ECSManager {
           }, []);
           break;
 
+        case QueryToken.AND_NOT: {
+          result = result.filter(entity => !thisResult.find((oe: Entity) => oe.id == entity.id));
+          break;
+        }
       }
     }
 

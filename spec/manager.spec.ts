@@ -175,6 +175,22 @@ describe('Query Entities', () => {
             .toEqual([{ id: 2 }, { id: 3 }, { id: 4 }, { id: 5 }], "Query returned unexpected result");
     });
 
+    it('Should succeed on "AND_NOT" comp query entity', () => {
+        const query = [
+            {
+                componentIdentifier: TestCompThree.identifier,
+                token: QueryToken.FIRST
+            },
+            {
+                componentIdentifier: TestCompOne.identifier,
+                token: QueryToken.AND_NOT
+            }
+        ];
+
+
+        expect(manager.queryEntities(query)).toEqual([{ id: 4 }], "Query returned unexpected result");
+    });
+
     describe('Bigger data set', () => {
         const _manager = new ECSManager();
 
