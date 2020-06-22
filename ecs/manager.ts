@@ -9,6 +9,8 @@ import {ComponentIdentifier} from './component-identifier.model';
 // TODO: All query results must be invalidated on change in entity/component
 // TODO: Event handling requires callee to keep relevant index to event. This should be encapsulated to reduce errors
 // TODO: entity id should be defined by callee or generated if not definer. Should fail somehow if taken
+// TODO: documentation using http://typedoc.org/
+// TODO: queryAny: return one entity with components
 
 export class EntityBuilder {
   constructor(private id: number, private ecsManager: ECSManager) {}
@@ -166,6 +168,7 @@ export class ECSManager {
     return result;
   }
 
+  // TODO: this probably causes GC spikes
   private createArgs(entry: EntityEntry): Component<Object>[] {
     const args = [];
     for (const component of entry.components) {
