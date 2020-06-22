@@ -1,6 +1,6 @@
 {
     "compilerOptions": {
-        "outDir": "./dist/",
+        "outDir": "dist",
         "sourceMap": true,
         "noImplicitAny": true,
         "module": "commonjs",
@@ -8,13 +8,14 @@
         "lib": [
             "dom", 
             "es5",
-            "es2015.collection",
-            "es2015.iterable",
+            "ES2015.Collection",
+            "ES2015.Iterable"
         ],
         "downlevelIteration": true,
         "declaration": true,
-        "declarationDir": "./dist",
+        "declarationDir": "dist",
         "declarationMap": true,
-        "jsx": "react",
-    },
+        "esModuleInterop": true,
+        "jsx": "react"
+    }
   }

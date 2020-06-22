@@ -1,8 +1,8 @@
-import {System, SystemFn} from './system';
-import {Entity} from './entity';
-import {Component} from './component';
-import {EscQuery, ComponentQueryResult, QueryToken, QueryNode, EntityEntry} from './esc-query';
-import {ComponentIdentifier} from './component-identifier';
+import {System, SystemFn} from './system.model';
+import {Entity} from './entity.model';
+import {Component} from './component.model';
+import {EscQuery, ComponentQueryResult, QueryToken, QueryNode, EntityEntry} from './esc-query.model';
+import {ComponentIdentifier} from './component-identifier.model';
 
 export class EntityBuilder {
   constructor(private id: number, private ecsManager: ECSManager) {}
@@ -21,7 +21,7 @@ export class ECSManager {
   private systems: System<number>[] = [];
   private entities: Entity[] = [];
   // TODO: no idea what notation to say Component<T>[], so I use any[] for now
-  private components = new Map<string, any[]>();
+  private components = new Map<string, Component<Object>[]>();
 
   private entityId = 0;
 
@@ -29,7 +29,7 @@ export class ECSManager {
 
   public constructor() {}
 
-  public registerEvent<T extends ComponentIdentifier>(
+  public registerEvent(
     system: SystemFn<Event>,
     query: EscQuery)
     : number {
@@ -41,7 +41,7 @@ export class ECSManager {
     return this.events.length - 1;
   }
 
-  public registerSystem<T extends ComponentIdentifier>(
+  public registerSystem(
     system: SystemFn<number>,
     query: EscQuery)
     : void {
@@ -77,7 +77,7 @@ export class ECSManager {
   }
 
   public queryEntities(query: EscQuery): Entity[] {
-    const entityIdReducer = (previousValues: Entity[], value: Component<any>) => {
+    const entityIdReducer = (previousValues: Entity[], value: Component<Object>) => {
       if (!previousValues.find(n => n.id === value.entityId)) {
         previousValues.push({ id: value.entityId });
       }
@@ -132,7 +132,7 @@ export class ECSManager {
 
     for (const cId of componentIds) {
       for (const entity of entities) {
-        const compIndex = this.components.get(cId).findIndex(c => c.entityId === entity);
+        const compIndex = this.components.get(cId).findIndex(c => c.entityId === entity.id);
         if (compIndex >= 0) {
           let indexOf = result.entities.findIndex(entry => entry.entity.id === entity.id);
           if (indexOf === -1) {
@@ -150,7 +150,7 @@ export class ECSManager {
     return result;
   }
 
-  private createArgs(entry: EntityEntry): Component<any>[] {
+  private createArgs(entry: EntityEntry): Component<Object>[] {
     const args = [];
     for (const component of entry.components) {
       const argComp = this.components.get(component[0])[component[1]];

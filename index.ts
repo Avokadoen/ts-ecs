@@ -1,8 +1,9 @@
-export * from './ecs/component';
-export * from './ecs/component-identifier';
-export * from './ecs/entity';
-export * from './ecs/esc-query';
+export * from './ecs/component.model';
+export * from './ecs/component-identifier.model';
+export * from './ecs/entity.model';
+export * from './ecs/esc-query.model';
+export * from './ecs/system.model';
+
 export * from './ecs/manager';
-export * from './ecs/system';
 
 
