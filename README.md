@@ -7,7 +7,7 @@ npm package can be found [here](https://www.npmjs.com/package/naive-ts-ecs)
 # How to build
 ##### Make sure you have [node and npm](https://www.npmjs.com/get-npm) 
 
-run
+Install dependencies:
 ```bash 
 npm install
 ```
