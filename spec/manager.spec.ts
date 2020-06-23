@@ -60,6 +60,28 @@ describe('AddComponent', () => {
     });
 });
 
+describe('AccessComponentData', () => {
+   it('Should return component on valid request', () => {
+       const manager = new ECSManager();
+
+       const testComp = new TestCompFour(10);
+       manager.createEntity().addComponent(testComp);
+
+       const testCompAccessed = manager.accessComponentData(testComp, 0);
+       expect(testCompAccessed.someState).toBe(10, 'State had unexpected type!');
+   });
+
+    it('Should return null on invalid request', () => {
+        const manager = new ECSManager();
+
+        const testComp = new TestCompFour(10);
+        manager.createEntity().addComponent(testComp);
+
+        const testCompAccessed = manager.accessComponentData(testComp, 999);
+        expect(testCompAccessed).toBeNull('Got component on invalid access');
+    });
+});
+
 const createSimpleQueryScenario = (manager: ECSManager) => {
     // Entity: 0
     manager.createEntity()

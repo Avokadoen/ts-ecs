@@ -11,6 +11,9 @@ import {ComponentIdentifier} from './component-identifier.model';
 // TODO: entity id should be defined by callee or generated if not definer. Should fail somehow if taken
 // TODO: documentation using http://typedoc.org/
 // TODO: queryAny: return one entity with components
+// TODO: Async functions/manager
+// TODO: register event could use observables to simplify api
+// TODO: error object on invalid queries etc
 
 export class EntityBuilder {
   constructor(private id: number, private ecsManager: ECSManager) {}
@@ -179,9 +182,23 @@ export class ECSManager {
         }
       }
     }
-
     return result;
   }
+
+  // TODO: there should be an alternative one where you use entityId and identifier
+  public accessComponentData<T extends ComponentIdentifier>(compType: T, index: number): T {
+    if (index < 0) {
+      return null;
+    }
+
+    const components = this.components.get(compType.identifier());
+    if (components.length <= index) {
+      return null;
+    }
+
+    return components[index].data as T;
+  }
+
   public onEvent(index: number, event: Event) {
     for (const entity of this.events[index].qResult.entities) {
       const args = this.createArgs(entity);
