@@ -1,7 +1,7 @@
 import {System, SystemFn} from './system.model';
 import {Entity} from './entity.model';
 import {Component} from './component.model';
-import {ComponentQueryResult, EntityEntry, EscQuery, QueryNode, QueryToken} from './esc-query.model';
+import {ComponentQueryResult, EntityEntry, EntityQueryResult, EscQuery, QueryNode, QueryToken} from './esc-query.model';
 import {ComponentIdentifier} from './component-identifier.model';
 
 // TODO: currently does not support multiple components of same type on one entity
@@ -101,7 +101,7 @@ export class ECSManager {
     return builder ?? new EntityBuilder(entityId, this);
   }
 
-  public queryEntities(query: EscQuery): Entity[] {
+  public queryEntities(query: EscQuery): EntityQueryResult {
     const entityIdReducer = (previousValues: Entity[], value: Component<Object>) => {
       if (!previousValues.find(n => n.id === value.entityId)) {
         previousValues.push({ id: value.entityId });
@@ -109,42 +109,69 @@ export class ECSManager {
       return previousValues;
     };
 
-    let result: Entity[] = [];
+    const orReducer = (previousValues: Entity[], value: Entity) => {
+      if (!previousValues.find(n => n.id === value.id)) {
+        previousValues.push(value);
+      }
+      return previousValues;
+    };
+
+    let result: EntityQueryResult =  {
+      sharedEntities: null,
+      entities: []
+    };
+
+    const andFn = (thisResult: Entity[], values: Entity[]) => {
+      const least = (thisResult.length < values.length) ? thisResult : values;
+      const biggest = (thisResult.length >= values.length) ? thisResult : values;
+      values = [];
+      for (const r of biggest) {
+        if (least.find(b => b.id === r.id)) {
+          values.push(r);
+        }
+      }
+
+      return values;
+    };
+
+    let isSharedState = false;
     for (const q of query) {
       const components = this.components.get(q.componentIdentifier);
 
       const thisResult: Entity[] = components?.filter(c => !isNaN(c.entityId)).reduce(entityIdReducer, []) ?? [];
+      let workingEntities = (isSharedState) ? (result.sharedEntities ?? []) : result.entities;
 
       switch (q.token) {
-
         case QueryToken.FIRST:
-          result = thisResult;
+          workingEntities = thisResult;
           break;
 
         case QueryToken.AND:
-          const least = (thisResult.length < result.length) ? thisResult : result;
-          const biggest = (thisResult.length >= result.length) ? thisResult : result;
-          result = [];
-          for (const r of biggest) {
-            if (least.find(b => b.id === r.id)) {
-              result.push(r);
-            }
-          }
+          workingEntities = andFn(thisResult, workingEntities);
           break;
 
         case QueryToken.OR:
-          result = result.concat(thisResult).reduce((previousValues: Entity[], value: Entity) => {
-            if (!previousValues.find(n => n.id === value.id)) {
-              previousValues.push(value);
-            }
-            return previousValues;
-          }, []);
+          workingEntities = workingEntities.concat(thisResult).reduce(orReducer, []);
           break;
 
         case QueryToken.AND_NOT: {
-          result = result.filter(entity => !thisResult.find((oe: Entity) => oe.id == entity.id));
+          workingEntities = workingEntities.filter(entity => !thisResult.find((oe: Entity) => oe.id == entity.id));
           break;
         }
+
+        case QueryToken.SHARED: {
+          result.sharedEntities = result.sharedEntities ?? [];
+          workingEntities = result.sharedEntities;
+          workingEntities = workingEntities.concat(thisResult).reduce(orReducer, []);
+          isSharedState = true;
+          break;
+        }
+      }
+
+      if (isSharedState) {
+        result.sharedEntities = workingEntities;
+      } else {
+        result.entities = workingEntities;
       }
     }
 
@@ -152,36 +179,64 @@ export class ECSManager {
   }
 
   public queryComponents(query: EscQuery): ComponentQueryResult {
-    const queryReducer = (previousValues: string[], value: QueryNode) => {
-      if (!previousValues.find(cId => cId === value.componentIdentifier)) {
+    const entityResult = this.queryEntities(query);
+
+    const result: ComponentQueryResult = {
+      entities: [],
+      sharedEntities: (entityResult.sharedEntities) ? [] : null
+    };
+
+    const componentIds = query.reduce((previousValues: string[], value: QueryNode) => {
+      if (!previousValues.find(cId => cId === value.componentIdentifier)
+          && value.token !== QueryToken.SHARED
+      ) {
         previousValues.push(value.componentIdentifier);
       }
       return previousValues;
-    };
+    }, []);
 
-    const componentIds = query.reduce(queryReducer, []);
-    const entities = this.queryEntities(query);
+    const setEntityEntry = (cId: string, entity: Entity, values: EntityEntry[]) => {
+      const compIndex = this.components.get(cId).findIndex(c => c.entityId === entity.id);
+      if (compIndex >= 0) {
+        let indexOf = values.findIndex(entry => entry.id === entity.id);
+        if (indexOf === -1) {
+          values.push({
+            id: entity.id,
+            components: new Map<string, number>()
+          });
+          indexOf = values.length - 1;
+        }
+        values.find(entry => entry.id === entity.id).components.set(cId, compIndex);
+      }
 
-    const result: ComponentQueryResult = {
-      entities: []
+      return values;
     };
 
     for (const cId of componentIds) {
-      for (const entity of entities) {
-        const compIndex = this.components.get(cId).findIndex(c => c.entityId === entity.id);
-        if (compIndex >= 0) {
-          let indexOf = result.entities.findIndex(entry => entry.id === entity.id);
-          if (indexOf === -1) {
-            result.entities.push({
-              id: entity.id,
-              components: new Map<string, number>()
-            });
-            indexOf = result.entities.length - 1;
-          }
-          result.entities.find(entry => entry.id === entity.id).components.set(cId, compIndex);
-        }
+      for (const entity of entityResult.entities) {
+        result.entities = setEntityEntry(cId, entity, result.entities);
       }
     }
+
+    if (!entityResult.sharedEntities) {
+      return result;
+    }
+
+    const sharedIds = query.reduce((previousValues: string[], value: QueryNode) => {
+      if (!previousValues.find(cId => cId === value.componentIdentifier)
+          && value.token === QueryToken.SHARED
+      ) {
+        previousValues.push(value.componentIdentifier);
+      }
+      return previousValues;
+    }, []);
+
+    for (const cId of sharedIds) {
+      for (const entity of entityResult.sharedEntities) {
+        result.sharedEntities = setEntityEntry(cId, entity, result.sharedEntities);
+      }
+    }
+
     return result;
   }
 

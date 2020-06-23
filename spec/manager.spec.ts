@@ -108,6 +108,12 @@ const createSimpleQueryScenario = (manager: ECSManager) => {
         .addComponent(new TestCompOne())
         .addComponent(new TestCompThree());
 
+    // Entity: 6
+    manager.createEntity()
+        .addComponent(new TestCompFour(0))
+        .addComponent(new TestCompThree());
+
+
     return manager;
 };
 
@@ -129,7 +135,7 @@ describe('Query Entities', () => {
         ];
 
 
-        expect(manager.queryEntities(query).sort(sortFn))
+        expect(manager.queryEntities(query).entities.sort(sortFn))
             .toEqual([{ id: 2 }], "Query returned unexpected result");
     });
 
@@ -142,7 +148,7 @@ describe('Query Entities', () => {
         ];
 
 
-        expect(manager.queryEntities(query).sort(sortFn))
+        expect(manager.queryEntities(query).entities.sort(sortFn))
             .toEqual([{ id: 0 }, { id: 3 }, { id: 5 }], "Query returned unexpected result");
     });
 
@@ -159,7 +165,7 @@ describe('Query Entities', () => {
         ];
 
 
-        expect(manager.queryEntities(query).sort(sortFn))
+        expect(manager.queryEntities(query).entities.sort(sortFn))
             .toEqual([{ id: 3 }, { id: 5 }], "Query returned unexpected result");
     });
 
@@ -176,7 +182,7 @@ describe('Query Entities', () => {
         ];
 
 
-        expect(manager.queryEntities(query).sort(sortFn))
+        expect(manager.queryEntities(query).entities.sort(sortFn))
             .toEqual([{ id: 3 }, { id: 5 }], "Query returned unexpected result");
     });
 
@@ -193,8 +199,8 @@ describe('Query Entities', () => {
         ];
 
 
-        expect(manager.queryEntities(query).sort(sortFn))
-            .toEqual([{ id: 2 }, { id: 3 }, { id: 4 }, { id: 5 }], "Query returned unexpected result");
+        expect(manager.queryEntities(query).entities.sort(sortFn))
+            .toEqual([{ id: 2 }, { id: 3 }, { id: 4 }, { id: 5 }, { id: 6 }], "Query returned unexpected result");
     });
 
     it('Should succeed on "AND_NOT" comp query entity', () => {
@@ -210,8 +216,31 @@ describe('Query Entities', () => {
         ];
 
 
-        expect(manager.queryEntities(query)).toEqual([{ id: 4 }], "Query returned unexpected result");
+        expect(manager.queryEntities(query).entities).toEqual([{ id: 4 }, { id: 6 }], "Query returned unexpected result");
     });
+
+    it('Should succeed on "AND" and "OR_SHARED" comp query entity', () => {
+        const query = [
+            {
+                componentIdentifier: TestCompOne.identifier,
+                token: QueryToken.FIRST
+            },
+            {
+                componentIdentifier: TestCompFour.identifier,
+                token: QueryToken.SHARED
+            },
+            {
+                componentIdentifier: TestCompThree.identifier,
+                token: QueryToken.AND
+            }
+        ];
+
+        const result = manager.queryEntities(query);
+
+        expect(result.entities.sort(sortFn)).toEqual([{ id: 0 }, { id: 3 }, { id: 5 }], "Query returned unexpected result");
+        expect(result.sharedEntities).toEqual([{id: 6}], "Query returned unexpected result");
+    });
+
 
     describe('Bigger data set', () => {
         const _manager = new ECSManager();
@@ -235,7 +264,7 @@ describe('Query Entities', () => {
                 },
             ];
 
-            const result = _manager.queryEntities(query);
+            const result = _manager.queryEntities(query).entities;
 
             expect(result.length).toBe(100, "Query returned unexpected result");
         });
@@ -252,7 +281,7 @@ describe('Query Entities', () => {
                 },
             ];
 
-            const result = _manager.queryEntities(query);
+            const result = _manager.queryEntities(query).entities;
 
             expect(result.length).toBe(0, "Query returned unexpected result");
         });
@@ -284,7 +313,8 @@ describe('Query runtime components', () => {
                     id: 2,
                     components: new Map()
                 }
-            ]
+            ],
+            sharedEntities: null
         };
         expected.entities[0].components.set(TestCompTwo.identifier, 0);
 
@@ -313,7 +343,8 @@ describe('Query runtime components', () => {
                     id: 5,
                     components: new Map()
                 }
-            ]
+            ],
+            sharedEntities: null
         };
         expected.entities[0].components.set(TestCompOne.identifier, 1);
         expected.entities[0].components.set(TestCompThree.identifier, 0);
@@ -326,7 +357,7 @@ describe('Query runtime components', () => {
 });
 
 describe('Systems', () => {
-    const testSystem = (_: number, args: Component<TestCompFour>[]) => {
+    const testSystem = <T>(_: T, args: Component<TestCompFour>[]) => {
         const testCompFour = args[0].data;
 
         testCompFour.someState += 1;
@@ -367,12 +398,6 @@ describe('Systems', () => {
                 token: QueryToken.FIRST
             },
         ];
-
-        const testSystem = (_: Event, args: Component<TestCompFour>[]) => {
-            const testCompFour = args[0].data;
-
-            testCompFour.someState += 1;
-        };
 
         const index = manager.registerEvent(testSystem, query);
 
