@@ -322,5 +322,8 @@ export class ECSManager {
     for (const system of this.systems) {
       system.qResult = this.queryComponents(system.query);
     }
+    for (const system of this.events) {
+      system.qResult = this.queryComponents(system.query);
+    }
   }
 }
