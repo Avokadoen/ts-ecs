@@ -459,7 +459,17 @@ describe('Systems', () => {
         expect(compFourRef.someState).toBe(2);
     });
 
-    it('Should share entity between entities in system', () => {
+    const sharedStateSystem = <T>(
+        _: T,
+        args: Component<TestCompOne>[],
+        sharedArgs: Component<TestCompFour>[]) => {
+        const shared = sharedArgs[0].data;
+        const three = sharedArgs[1].data;
+
+        shared.someState += 1;
+    };
+
+    it('Should share entity between entities in system dispatch', () => {
         const manager = new ECSManager();
 
         const compFourRef = new TestCompFour(0);
@@ -485,19 +495,42 @@ describe('Systems', () => {
             },
         ];
 
-        const sharedStateSystem = (
-            _: number,
-            args: Component<TestCompOne>[],
-            sharedArgs: Component<TestCompFour>[]) => {
-            const shared = sharedArgs[0].data;
-            const three = sharedArgs[1].data;
-
-            shared.someState += 1;
-        };
-
         manager.registerSystem(sharedStateSystem, query);
 
         manager.dispatch();
+
+        expect(compFourRef.someState).toBe(2, 'Shared state was not mutated');
+    });
+
+    it('Should share entity between entities in system event', () => {
+        const manager = new ECSManager();
+
+        const compFourRef = new TestCompFour(0);
+        manager.createEntity()
+            .addComponent(compFourRef)
+            .addComponent(new TestCompThree());
+
+        manager.createEntity().addComponent(new TestCompOne());
+        manager.createEntity().addComponent(new TestCompOne());
+
+        const query = [
+            {
+                componentIdentifier: TestCompOne.identifier,
+                token: QueryToken.FIRST
+            },
+            {
+                componentIdentifier: TestCompFour.identifier,
+                token: QueryToken.SHARED
+            },
+            {
+                componentIdentifier: TestCompThree.identifier,
+                token: QueryToken.AND
+            },
+        ];
+
+        const index = manager.registerEvent(sharedStateSystem, query);
+
+        manager.onEvent(index, null);
 
         expect(compFourRef.someState).toBe(2, 'Shared state was not mutated');
     });

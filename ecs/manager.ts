@@ -14,6 +14,7 @@ import {ComponentIdentifier} from './component-identifier.model';
 // TODO: Async functions/manager
 // TODO: register event could use observables to simplify api
 // TODO: error object on invalid queries etc
+// TODO: interpret query string to EscQuery
 
 export class EntityBuilder {
   constructor(private id: number, private ecsManager: ECSManager) {}
