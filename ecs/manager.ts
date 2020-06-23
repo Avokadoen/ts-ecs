@@ -101,6 +101,7 @@ export class ECSManager {
     return builder ?? new EntityBuilder(entityId, this);
   }
 
+  // TODO: this should be refactored when query structure is changed
   public queryEntities(query: EscQuery): EntityQueryResult {
     const entityIdReducer = (previousValues: Entity[], value: Component<Object>) => {
       if (!previousValues.find(n => n.id === value.entityId)) {
@@ -255,9 +256,18 @@ export class ECSManager {
   }
 
   public onEvent(index: number, event: Event) {
-    for (const entity of this.events[index].qResult.entities) {
+    const subscriber = this.events[index];
+    let sharedArgs: Component<Object>[] = null;
+    if (subscriber.qResult.sharedEntities) {
+      sharedArgs = [];
+      for (const entity of subscriber.qResult.sharedEntities) {
+        sharedArgs = sharedArgs.concat(this.createArgs(entity));
+      }
+    }
+
+    for (const entity of subscriber.qResult.entities) {
       const args = this.createArgs(entity);
-      this.events[index].system(event, args);
+      this.events[index].system(event, args, sharedArgs);
     }
   }
 
@@ -267,10 +277,19 @@ export class ECSManager {
     const now = Date.now();
 
     const deltaTime = (now - this.prevRun) / 1000;
+
     for (const system of this.systems) {
+      let sharedArgs: Component<Object>[] = null;
+      if (system.qResult.sharedEntities) {
+        sharedArgs = [];
+        for (const shared of system.qResult.sharedEntities) {
+          sharedArgs = sharedArgs.concat(this.createArgs(shared));
+        }
+      }
+
       for (const entity of system.qResult.entities) {
-        const args = this.createArgs(entity);
-        system.system(deltaTime, args);
+        let args = this.createArgs(entity);
+        system.system(deltaTime, args, sharedArgs);
       }
     }
 

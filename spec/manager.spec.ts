@@ -113,7 +113,6 @@ const createSimpleQueryScenario = (manager: ECSManager) => {
         .addComponent(new TestCompFour(0))
         .addComponent(new TestCompThree());
 
-
     return manager;
 };
 
@@ -458,5 +457,41 @@ describe('Systems', () => {
         manager.dispatch();
 
         expect(compFourRef.someState).toBe(2);
+    });
+
+    it('Should share entity between entities in system', () => {
+        const manager = new ECSManager();
+
+        const compFourRef = new TestCompFour(0);
+        manager.createEntity().addComponent(compFourRef);
+
+        manager.createEntity().addComponent(new TestCompOne());
+        manager.createEntity().addComponent(new TestCompOne());
+
+        const query = [
+            {
+                componentIdentifier: TestCompOne.identifier,
+                token: QueryToken.FIRST
+            },
+            {
+                componentIdentifier: TestCompFour.identifier,
+                token: QueryToken.SHARED
+            },
+        ];
+
+        const sharedStateSystem = (
+            _: number,
+            args: Component<TestCompOne>[],
+            sharedArgs: Component<TestCompFour>[]) => {
+            const shared = sharedArgs[0].data;
+
+            shared.someState += 1;
+        };
+
+        manager.registerSystem(sharedStateSystem, query);
+
+        manager.dispatch();
+
+        expect(compFourRef.someState).toBe(2, 'Shared state was not mutated');
     });
 });
