@@ -35,7 +35,7 @@ export class ECSManager {
   private events: System<Event>[] = [];
   private systems: System<number>[] = [];
   private entities: Entity[] = [];
-  private components = new Map<string, Component<Object>[]>();
+  private components = new Map<string, Component<object>[]>();
 
   private entityId = 0;
 
@@ -84,7 +84,7 @@ export class ECSManager {
   public addComponent<T extends ComponentIdentifier>(entityId: number, component: T, builder?: EntityBuilder): EntityBuilder {
     const compName = component.identifier();
     if (!this.components.has(compName)) {
-      this.components.set(compName, new Array<Component<typeof compName>>());
+      this.components.set(compName, new Array<Component<T>>());
     }
     const actualComponent = {entityId, data: component};
     this.components.get(compName).push(actualComponent);
@@ -103,7 +103,7 @@ export class ECSManager {
 
   // TODO: this should be refactored when query structure is changed
   public queryEntities(query: EscQuery): EntityQueryResult {
-    const entityIdReducer = (previousValues: Entity[], value: Component<Object>) => {
+    const entityIdReducer = (previousValues: Entity[], value: Component<object>) => {
       if (!previousValues.find(n => n.id === value.entityId)) {
         previousValues.push({ id: value.entityId });
       }
@@ -187,10 +187,14 @@ export class ECSManager {
       sharedEntities: (entityResult.sharedEntities) ? [] : null
     };
 
+    let isBeforeShared = false;
     const componentIds = query.reduce((previousValues: string[], value: QueryNode) => {
-      if (!previousValues.find(cId => cId === value.componentIdentifier)
-          && value.token !== QueryToken.SHARED
-      ) {
+      if (value.token === QueryToken.SHARED || isBeforeShared) {
+        isBeforeShared = true;
+        return previousValues;
+      }
+
+      if (!previousValues.find(cId => cId === value.componentIdentifier)) {
         previousValues.push(value.componentIdentifier);
       }
       return previousValues;
@@ -199,13 +203,12 @@ export class ECSManager {
     const setEntityEntry = (cId: string, entity: Entity, values: EntityEntry[]) => {
       const compIndex = this.components.get(cId).findIndex(c => c.entityId === entity.id);
       if (compIndex >= 0) {
-        let indexOf = values.findIndex(entry => entry.id === entity.id);
+        const indexOf = values.findIndex(entry => entry.id === entity.id);
         if (indexOf === -1) {
           values.push({
             id: entity.id,
             components: new Map<string, number>()
           });
-          indexOf = values.length - 1;
         }
         values.find(entry => entry.id === entity.id).components.set(cId, compIndex);
       }
@@ -223,10 +226,17 @@ export class ECSManager {
       return result;
     }
 
+    let isAfterShared = false;
     const sharedIds = query.reduce((previousValues: string[], value: QueryNode) => {
-      if (!previousValues.find(cId => cId === value.componentIdentifier)
-          && value.token === QueryToken.SHARED
-      ) {
+      if (value.token === QueryToken.SHARED) {
+        isAfterShared = true;
+      }
+
+      if (!isAfterShared) {
+        return previousValues;
+      }
+
+      if (!previousValues.find(cId => cId === value.componentIdentifier)) {
         previousValues.push(value.componentIdentifier);
       }
       return previousValues;
@@ -257,7 +267,7 @@ export class ECSManager {
 
   public onEvent(index: number, event: Event) {
     const subscriber = this.events[index];
-    let sharedArgs: Component<Object>[] = null;
+    let sharedArgs: Component<object>[] = null;
     if (subscriber.qResult.sharedEntities) {
       sharedArgs = [];
       for (const entity of subscriber.qResult.sharedEntities) {
@@ -279,7 +289,7 @@ export class ECSManager {
     const deltaTime = (now - this.prevRun) / 1000;
 
     for (const system of this.systems) {
-      let sharedArgs: Component<Object>[] = null;
+      let sharedArgs: Component<object>[] = null;
       if (system.qResult.sharedEntities) {
         sharedArgs = [];
         for (const shared of system.qResult.sharedEntities) {
@@ -293,12 +303,11 @@ export class ECSManager {
       }
     }
 
-
     this.prevRun = now;
   }
 
   // TODO: this probably causes GC spikes
-  private createArgs(entry: EntityEntry): Component<Object>[] {
+  private createArgs(entry: EntityEntry): Component<object>[] {
     const args = [];
     for (const component of entry.components) {
       const argComp = this.components.get(component[0])[component[1]];

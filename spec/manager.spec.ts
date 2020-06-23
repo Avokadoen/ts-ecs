@@ -463,7 +463,9 @@ describe('Systems', () => {
         const manager = new ECSManager();
 
         const compFourRef = new TestCompFour(0);
-        manager.createEntity().addComponent(compFourRef);
+        manager.createEntity()
+            .addComponent(compFourRef)
+            .addComponent(new TestCompThree());
 
         manager.createEntity().addComponent(new TestCompOne());
         manager.createEntity().addComponent(new TestCompOne());
@@ -477,6 +479,10 @@ describe('Systems', () => {
                 componentIdentifier: TestCompFour.identifier,
                 token: QueryToken.SHARED
             },
+            {
+                componentIdentifier: TestCompThree.identifier,
+                token: QueryToken.AND
+            },
         ];
 
         const sharedStateSystem = (
@@ -484,6 +490,7 @@ describe('Systems', () => {
             args: Component<TestCompOne>[],
             sharedArgs: Component<TestCompFour>[]) => {
             const shared = sharedArgs[0].data;
+            const three = sharedArgs[1].data;
 
             shared.someState += 1;
         };
