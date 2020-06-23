@@ -1,0 +1,614 @@
+<!doctype html>
+<html class="default no-js">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>ECSManager | naive-ts-ecs</title>
+	<meta name="description" content="Documentation for naive-ts-ecs">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+<header>
+	<div class="tsd-page-toolbar">
+		<div class="container">
+			<div class="table-wrap">
+				<div class="table-cell" id="tsd-search" data-index="../assets/js/search.json" data-base="..">
+					<div class="field">
+						<label for="tsd-search-field" class="tsd-widget search no-caption">Search</label>
+						<input id="tsd-search-field" type="text" />
+					</div>
+					<ul class="results">
+						<li class="state loading">Preparing search index...</li>
+						<li class="state failure">The search index is not available</li>
+					</ul>
+					<a href="../index.html" class="title">naive-ts-ecs</a>
+				</div>
+				<div class="table-cell" id="tsd-widgets">
+					<div id="tsd-filter">
+						<a href="#" class="tsd-widget options no-caption" data-toggle="options">Options</a>
+						<div class="tsd-filter-group">
+							<div class="tsd-select" id="tsd-filter-visibility">
+								<span class="tsd-select-label">All</span>
+								<ul class="tsd-select-list">
+									<li data-value="public">Public</li>
+									<li data-value="protected">Public/Protected</li>
+									<li data-value="private" class="selected">All</li>
+								</ul>
+							</div>
+							<input type="checkbox" id="tsd-filter-inherited" checked />
+							<label class="tsd-widget" for="tsd-filter-inherited">Inherited</label>
+							<input type="checkbox" id="tsd-filter-externals" checked />
+							<label class="tsd-widget" for="tsd-filter-externals">Externals</label>
+							<input type="checkbox" id="tsd-filter-only-exported" />
+							<label class="tsd-widget" for="tsd-filter-only-exported">Only exported</label>
+						</div>
+					</div>
+					<a href="#" class="tsd-widget menu no-caption" data-toggle="menu">Menu</a>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="tsd-page-title">
+		<div class="container">
+			<ul class="tsd-breadcrumb">
+				<li>
+					<a href="../globals.html">Globals</a>
+				</li>
+				<li>
+					<a href="../modules/_ecs_manager_.html">&quot;ecs/manager&quot;</a>
+				</li>
+				<li>
+					<a href="_ecs_manager_.ecsmanager.html">ECSManager</a>
+				</li>
+			</ul>
+			<h1>Class ECSManager</h1>
+		</div>
+	</div>
+</header>
+<div class="container container-main">
+	<div class="row">
+		<div class="col-8 col-content">
+			<section class="tsd-panel tsd-comment">
+				<div class="tsd-comment tsd-typography">
+					<div class="lead">
+						<p>The main class, and usually a singleton for your program that will manage your game state</p>
+					</div>
+				</div>
+			</section>
+			<section class="tsd-panel tsd-hierarchy">
+				<h3>Hierarchy</h3>
+				<ul class="tsd-hierarchy">
+					<li>
+						<span class="target">ECSManager</span>
+					</li>
+				</ul>
+			</section>
+			<section class="tsd-panel-group tsd-index-group">
+				<h2>Index</h2>
+				<section class="tsd-panel tsd-index-panel">
+					<div class="tsd-index-content">
+						<section class="tsd-index-section ">
+							<h3>Methods</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-has-type-parameter"><a href="_ecs_manager_.ecsmanager.html#accesscomponentdata" class="tsd-kind-icon">access<wbr>Component<wbr>Data</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-has-type-parameter"><a href="_ecs_manager_.ecsmanager.html#addcomponent" class="tsd-kind-icon">add<wbr>Component</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_ecs_manager_.ecsmanager.html#createentity" class="tsd-kind-icon">create<wbr>Entity</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-has-type-parameter"><a href="_ecs_manager_.ecsmanager.html#createentitywithcomponents" class="tsd-kind-icon">create<wbr>Entity<wbr>With<wbr>Components</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_ecs_manager_.ecsmanager.html#dispatch" class="tsd-kind-icon">dispatch</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_ecs_manager_.ecsmanager.html#onevent" class="tsd-kind-icon">on<wbr>Event</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_ecs_manager_.ecsmanager.html#querycomponents" class="tsd-kind-icon">query<wbr>Components</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_ecs_manager_.ecsmanager.html#queryentities" class="tsd-kind-icon">query<wbr>Entities</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_ecs_manager_.ecsmanager.html#registerevent" class="tsd-kind-icon">register<wbr>Event</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_ecs_manager_.ecsmanager.html#registersystem" class="tsd-kind-icon">register<wbr>System</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_ecs_manager_.ecsmanager.html#removecomponent" class="tsd-kind-icon">remove<wbr>Component</a></li>
+							</ul>
+						</section>
+					</div>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Methods</h2>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-has-type-parameter">
+					<a name="accesscomponentdata" class="tsd-anchor"></a>
+					<h3>access<wbr>Component<wbr>Data</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-has-type-parameter">
+						<li class="tsd-signature tsd-kind-icon">access<wbr>Component<wbr>Data&lt;T&gt;<span class="tsd-signature-symbol">(</span>compType<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span>, index<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">null</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/Avokadoen/ts-ecs/blob/c5a6622/ecs/manager.ts#L354">ecs/manager.ts:354</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Retrieves a component from the internal storage</p>
+								</div>
+							</div>
+							<h4 class="tsd-type-parameters-title">Type parameters</h4>
+							<ul class="tsd-type-parameters">
+								<li>
+									<h4>T<span class="tsd-signature-symbol">: </span><a href="../interfaces/_ecs_component_identifier_model_.componentidentifier.html" class="tsd-signature-type">ComponentIdentifier</a></h4>
+									<div class="tsd-comment tsd-typography">
+										<p>any class that implements ComponentIdentifier</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>compType: <span class="tsd-signature-type">T</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>any instance of same type as target component</p>
+									</div>
+								</li>
+								<li>
+									<h5>index: <span class="tsd-signature-type">number</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>index of the component in the internal storage</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">T</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">null</span></h4>
+							<p>requested component or null</p>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-has-type-parameter">
+					<a name="addcomponent" class="tsd-anchor"></a>
+					<h3>add<wbr>Component</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-has-type-parameter">
+						<li class="tsd-signature tsd-kind-icon">add<wbr>Component&lt;T&gt;<span class="tsd-signature-symbol">(</span>entityId<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, component<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span>, builder<span class="tsd-signature-symbol">?: </span><a href="_ecs_manager_.entitybuilder.html" class="tsd-signature-type">EntityBuilder</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="_ecs_manager_.entitybuilder.html" class="tsd-signature-type">EntityBuilder</a></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/Avokadoen/ts-ecs/blob/c5a6622/ecs/manager.ts#L158">ecs/manager.ts:158</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+							</div>
+							<h4 class="tsd-type-parameters-title">Type parameters</h4>
+							<ul class="tsd-type-parameters">
+								<li>
+									<h4>T<span class="tsd-signature-symbol">: </span><a href="../interfaces/_ecs_component_identifier_model_.componentidentifier.html" class="tsd-signature-type">ComponentIdentifier</a></h4>
+									<div class="tsd-comment tsd-typography">
+										<p>any class that implements ComponentIdentifier</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>entityId: <span class="tsd-signature-type">number</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>id of entity that is supposed to be updated</p>
+									</div>
+								</li>
+								<li>
+									<h5>component: <span class="tsd-signature-type">T</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>a new component to be connected with given entity.</p>
+									</div>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> builder: <a href="_ecs_manager_.entitybuilder.html" class="tsd-signature-type">EntityBuilder</a></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>Used by the EntityBuilder to cache itself, can be ignored usually</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <a href="_ecs_manager_.entitybuilder.html" class="tsd-signature-type">EntityBuilder</a></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="createentity" class="tsd-anchor"></a>
+					<h3>create<wbr>Entity</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">create<wbr>Entity<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="_ecs_manager_.entitybuilder.html" class="tsd-signature-type">EntityBuilder</a></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/Avokadoen/ts-ecs/blob/c5a6622/ecs/manager.ts#L134">ecs/manager.ts:134</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Creates a new entity</p>
+								</div>
+							</div>
+							<h4 class="tsd-returns-title">Returns <a href="_ecs_manager_.entitybuilder.html" class="tsd-signature-type">EntityBuilder</a></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-has-type-parameter">
+					<a name="createentitywithcomponents" class="tsd-anchor"></a>
+					<h3>create<wbr>Entity<wbr>With<wbr>Components</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-has-type-parameter">
+						<li class="tsd-signature tsd-kind-icon">create<wbr>Entity<wbr>With<wbr>Components&lt;T&gt;<span class="tsd-signature-symbol">(</span>components<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="_ecs_manager_.entitybuilder.html" class="tsd-signature-type">EntityBuilder</a></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/Avokadoen/ts-ecs/blob/c5a6622/ecs/manager.ts#L143">ecs/manager.ts:143</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+							</div>
+							<h4 class="tsd-type-parameters-title">Type parameters</h4>
+							<ul class="tsd-type-parameters">
+								<li>
+									<h4>T<span class="tsd-signature-symbol">: </span><a href="../interfaces/_ecs_component_identifier_model_.componentidentifier.html" class="tsd-signature-type">ComponentIdentifier</a></h4>
+									<div class="tsd-comment tsd-typography">
+										<p>any class that implements ComponentIdentifier</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>components: <span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">[]</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>an array of components that are to be added to a new entity</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <a href="_ecs_manager_.entitybuilder.html" class="tsd-signature-type">EntityBuilder</a></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="dispatch" class="tsd-anchor"></a>
+					<h3>dispatch</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">dispatch<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/Avokadoen/ts-ecs/blob/c5a6622/ecs/manager.ts#L392">ecs/manager.ts:392</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Invokes all normal systems and supplies them with relevant based on previous query arguments
+									and a common delta time</p>
+								</div>
+							</div>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="onevent" class="tsd-anchor"></a>
+					<h3>on<wbr>Event</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">on<wbr>Event<span class="tsd-signature-symbol">(</span>index<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, event<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Event</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/Avokadoen/ts-ecs/blob/c5a6622/ecs/manager.ts#L372">ecs/manager.ts:372</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Invokes a system event and supplies them with relevant based on previous query arguments</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>index: <span class="tsd-signature-type">number</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The index of the event being fired</p>
+									</div>
+								</li>
+								<li>
+									<h5>event: <span class="tsd-signature-type">Event</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>Event data</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="querycomponents" class="tsd-anchor"></a>
+					<h3>query<wbr>Components</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">query<wbr>Components<span class="tsd-signature-symbol">(</span>query<span class="tsd-signature-symbol">: </span><a href="../modules/_ecs_esc_query_model_.html#escquery" class="tsd-signature-type">EscQuery</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="../interfaces/_ecs_esc_query_model_.componentqueryresult.html" class="tsd-signature-type">ComponentQueryResult</a></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/Avokadoen/ts-ecs/blob/c5a6622/ecs/manager.ts#L271">ecs/manager.ts:271</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>query: <a href="../modules/_ecs_esc_query_model_.html#escquery" class="tsd-signature-type">EscQuery</a></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>filter for which components to retrieve</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <a href="../interfaces/_ecs_esc_query_model_.componentqueryresult.html" class="tsd-signature-type">ComponentQueryResult</a></h4>
+							<p>similarly to <a href="_ecs_manager_.ecsmanager.html#queryentities">ECSManager.queryEntities</a> with added relevant components connected
+							to given entities</p>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="queryentities" class="tsd-anchor"></a>
+					<h3>query<wbr>Entities</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">query<wbr>Entities<span class="tsd-signature-symbol">(</span>query<span class="tsd-signature-symbol">: </span><a href="../modules/_ecs_esc_query_model_.html#escquery" class="tsd-signature-type">EscQuery</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="../interfaces/_ecs_esc_query_model_.entityqueryresult.html" class="tsd-signature-type">EntityQueryResult</a></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/Avokadoen/ts-ecs/blob/c5a6622/ecs/manager.ts#L189">ecs/manager.ts:189</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>query: <a href="../modules/_ecs_esc_query_model_.html#escquery" class="tsd-signature-type">EscQuery</a></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>filter for which entities to retrieve</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <a href="../interfaces/_ecs_esc_query_model_.entityqueryresult.html" class="tsd-signature-type">EntityQueryResult</a></h4>
+							<p>returns a object containing entities that are meant to
+								be iterated by the manager under dispatch/event and shared entities that
+							will be shared each iteration</p>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="registerevent" class="tsd-anchor"></a>
+					<h3>register<wbr>Event</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">register<wbr>Event<span class="tsd-signature-symbol">(</span>system<span class="tsd-signature-symbol">: </span><a href="../modules/_ecs_system_model_.html#systemfn" class="tsd-signature-type">SystemFn</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Event</span><span class="tsd-signature-symbol">&gt;</span>, query<span class="tsd-signature-symbol">: </span><a href="../modules/_ecs_esc_query_model_.html#escquery" class="tsd-signature-type">EscQuery</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/Avokadoen/ts-ecs/blob/c5a6622/ecs/manager.ts#L101">ecs/manager.ts:101</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>A system meant to be called manually by the callee</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>system: <a href="../modules/_ecs_system_model_.html#systemfn" class="tsd-signature-type">SystemFn</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Event</span><span class="tsd-signature-symbol">&gt;</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>A function that will read/write to components</p>
+									</div>
+								</li>
+								<li>
+									<h5>query: <a href="../modules/_ecs_esc_query_model_.html#escquery" class="tsd-signature-type">EscQuery</a></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The query used to fetch system parameters</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="registersystem" class="tsd-anchor"></a>
+					<h3>register<wbr>System</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">register<wbr>System<span class="tsd-signature-symbol">(</span>system<span class="tsd-signature-symbol">: </span><a href="../modules/_ecs_system_model_.html#systemfn" class="tsd-signature-type">SystemFn</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">&gt;</span>, query<span class="tsd-signature-symbol">: </span><a href="../modules/_ecs_esc_query_model_.html#escquery" class="tsd-signature-type">EscQuery</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/Avokadoen/ts-ecs/blob/c5a6622/ecs/manager.ts#L120">ecs/manager.ts:120</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>A system meant to be called each frame by the manager</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>system: <a href="../modules/_ecs_system_model_.html#systemfn" class="tsd-signature-type">SystemFn</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">&gt;</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>A function that will read/write to components</p>
+									</div>
+								</li>
+								<li>
+									<h5>query: <a href="../modules/_ecs_esc_query_model_.html#escquery" class="tsd-signature-type">EscQuery</a></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The query used to fetch system parameters</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="removecomponent" class="tsd-anchor"></a>
+					<h3>remove<wbr>Component</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">remove<wbr>Component<span class="tsd-signature-symbol">(</span>entityId<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, identifier<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, builder<span class="tsd-signature-symbol">?: </span><a href="_ecs_manager_.entitybuilder.html" class="tsd-signature-type">EntityBuilder</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="_ecs_manager_.entitybuilder.html" class="tsd-signature-type">EntityBuilder</a></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/Avokadoen/ts-ecs/blob/c5a6622/ecs/manager.ts#L175">ecs/manager.ts:175</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>entityId: <span class="tsd-signature-type">number</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>id of entity that is supposed to be updated</p>
+									</div>
+								</li>
+								<li>
+									<h5>identifier: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>the type identifier for the component you want to remove</p>
+									</div>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> builder: <a href="_ecs_manager_.entitybuilder.html" class="tsd-signature-type">EntityBuilder</a></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>Used by the EntityBuilder to cache itself, can be ignored usually</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <a href="_ecs_manager_.entitybuilder.html" class="tsd-signature-type">EntityBuilder</a></h4>
+						</li>
+					</ul>
+				</section>
+			</section>
+		</div>
+		<div class="col-4 col-menu menu-sticky-wrap menu-highlight">
+			<nav class="tsd-navigation primary">
+				<ul>
+					<li class="globals  ">
+						<a href="../globals.html"><em>Globals</em></a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="../modules/_ecs_component_identifier_model_.html">&quot;ecs/component-<wbr>identifier.model&quot;</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="../modules/_ecs_component_model_.html">&quot;ecs/component.model&quot;</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="../modules/_ecs_entity_model_.html">&quot;ecs/entity.model&quot;</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="../modules/_ecs_esc_query_model_.html">&quot;ecs/esc-<wbr>query.model&quot;</a>
+					</li>
+					<li class="current tsd-kind-module">
+						<a href="../modules/_ecs_manager_.html">&quot;ecs/manager&quot;</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="../modules/_ecs_system_model_.html">&quot;ecs/system.model&quot;</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="../modules/_index_.html">&quot;index&quot;</a>
+					</li>
+				</ul>
+			</nav>
+			<nav class="tsd-navigation secondary menu-sticky">
+				<ul class="before-current">
+				</ul>
+				<ul class="current">
+					<li class="current tsd-kind-class tsd-parent-kind-module">
+						<a href="_ecs_manager_.ecsmanager.html" class="tsd-kind-icon">ECSManager</a>
+						<ul>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-has-type-parameter">
+								<a href="_ecs_manager_.ecsmanager.html#accesscomponentdata" class="tsd-kind-icon">access<wbr>Component<wbr>Data</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-has-type-parameter">
+								<a href="_ecs_manager_.ecsmanager.html#addcomponent" class="tsd-kind-icon">add<wbr>Component</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="_ecs_manager_.ecsmanager.html#createentity" class="tsd-kind-icon">create<wbr>Entity</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-has-type-parameter">
+								<a href="_ecs_manager_.ecsmanager.html#createentitywithcomponents" class="tsd-kind-icon">create<wbr>Entity<wbr>With<wbr>Components</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="_ecs_manager_.ecsmanager.html#dispatch" class="tsd-kind-icon">dispatch</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="_ecs_manager_.ecsmanager.html#onevent" class="tsd-kind-icon">on<wbr>Event</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="_ecs_manager_.ecsmanager.html#querycomponents" class="tsd-kind-icon">query<wbr>Components</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="_ecs_manager_.ecsmanager.html#queryentities" class="tsd-kind-icon">query<wbr>Entities</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="_ecs_manager_.ecsmanager.html#registerevent" class="tsd-kind-icon">register<wbr>Event</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="_ecs_manager_.ecsmanager.html#registersystem" class="tsd-kind-icon">register<wbr>System</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="_ecs_manager_.ecsmanager.html#removecomponent" class="tsd-kind-icon">remove<wbr>Component</a>
+							</li>
+						</ul>
+					</li>
+				</ul>
+				<ul class="after-current">
+					<li class=" tsd-kind-class tsd-parent-kind-module">
+						<a href="_ecs_manager_.entitybuilder.html" class="tsd-kind-icon">Entity<wbr>Builder</a>
+					</li>
+				</ul>
+			</nav>
+		</div>
+	</div>
+</div>
+<footer class="with-border-bottom">
+	<div class="container">
+		<h2>Legend</h2>
+		<div class="tsd-legend-group">
+			<ul class="tsd-legend">
+				<li class="tsd-kind-type-alias"><span class="tsd-kind-icon">Type alias</span></li>
+				<li class="tsd-kind-type-alias tsd-has-type-parameter"><span class="tsd-kind-icon">Type alias with type parameter</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-interface"><span class="tsd-kind-icon">Interface</span></li>
+				<li class="tsd-kind-interface tsd-has-type-parameter"><span class="tsd-kind-icon">Interface with type parameter</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-class"><span class="tsd-kind-icon">Class</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class"><span class="tsd-kind-icon">Method</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-enum"><span class="tsd-kind-icon">Enumeration</span></li>
+			</ul>
+		</div>
+	</div>
+</footer>
+<div class="container tsd-generator">
+	<p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p>
+</div>
+<div class="overlay"></div>
+<script src="../assets/js/main.js"></script>
+<script>if (location.protocol == 'file:') document.write('<script src="../assets/js/search.js"><' + '/script>');</script>
+</body>
+</html>

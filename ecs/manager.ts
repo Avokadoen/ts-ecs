@@ -1,7 +1,7 @@
 import {System, SystemFn} from './system.model';
-import {Entity} from './entity.model';
+import {Entity, EntityEntry} from './entity.model';
 import {Component} from './component.model';
-import {ComponentQueryResult, EntityEntry, EntityQueryResult, EscQuery, QueryNode, QueryToken} from './esc-query.model';
+import {ComponentQueryResult, EntityQueryResult, EscQuery, QueryNode, QueryToken} from './esc-query.model';
 import {ComponentIdentifier} from './component-identifier.model';
 
 // TODO: currently does not support multiple components of same type on one entity
@@ -16,34 +16,88 @@ import {ComponentIdentifier} from './component-identifier.model';
 // TODO: error object on invalid queries etc
 // TODO: interpret query string to EscQuery
 
+/**
+ * Builder for entities. Enables end user to chain operations.
+ * Example:
+ * ```ts
+ * new ECSManager().createEntity().addComponent(new TestComp());
+ * ```
+ */
 export class EntityBuilder {
+
+  /**
+   * This should not be used manually
+   * @param id  id of entity that is supposed to be updated
+   * @param ecsManager manager that is creating the builder
+   */
   constructor(private id: number, private ecsManager: ECSManager) {}
 
+  /**
+   * Retrieve the id of the entity that is being built
+   */
   get entityId(): number {
     return this.id;
   }
 
+  /**
+   * A facade to {@link ECSManager.addComponent}
+   * @typeParam T  any class that implements ComponentIdentifier
+   * @param component   a new component to be connected with given entity.
+   */
   public addComponent<T extends ComponentIdentifier>(component: T): EntityBuilder {
     return this.ecsManager.addComponent(this.id, component, this);
   }
 
+  /**
+   * A facade to {@link ECSManager.removeComponent}
+   * @typeParam T  any class that implements ComponentIdentifier
+   * @param identifier   the type identifier for the component you want to remove
+   */
   public removeComponent(identifier: string): EntityBuilder {
     return this.ecsManager.removeComponent(this.id, identifier, this);
   }
 }
 
+/**
+ * The main class, and usually a singleton for your program that will manage your game state
+ */
 export class ECSManager {
+  /**
+   * @ignore
+   */
   private events: System<Event>[] = [];
+
+  /**
+   * @ignore
+   */
   private systems: System<number>[] = [];
+
+  /**
+   * @ignore
+   */
   private entities: Entity[] = [];
+
+  /**
+   * @ignore
+   */
   private components = new Map<string, Component<object>[]>();
 
+  /**
+   * @ignore
+   */
   private entityId = 0;
 
+  /**
+   * @ignore
+   */
   private prevRun: number;
 
-  public constructor() {}
-
+  /**
+   * A system meant to be called manually by the callee
+   *
+   * @param system  A function that will read/write to components
+   * @param query  The query used to fetch system parameters
+   */
   public registerEvent(
     system: SystemFn<Event>,
     query: EscQuery)
@@ -57,6 +111,12 @@ export class ECSManager {
     return this.events.length - 1;
   }
 
+  /**
+   * A system meant to be called each frame by the manager
+   *
+   * @param system  A function that will read/write to components
+   * @param query  The query used to fetch system parameters
+   */
   public registerSystem(
     system: SystemFn<number>,
     query: EscQuery)
@@ -68,11 +128,18 @@ export class ECSManager {
     });
   }
 
+  /**
+   * Creates a new entity
+   */
   public createEntity(): EntityBuilder {
     this.entities.push({ id: this.entityId++ });
     return new EntityBuilder(this.entityId - 1, this);
   }
 
+  /**
+   * @typeParam T  any class that implements ComponentIdentifier
+   * @param components  an array of components that are to be added to a new entity
+   */
   public createEntityWithComponents<T extends ComponentIdentifier>(components: T[]): EntityBuilder {
     const entityBuilder = this.createEntity();
     for (const component of components) {
@@ -82,6 +149,12 @@ export class ECSManager {
   }
 
   // TODO: update relevant systems query results (see top todo)
+  /**
+   * @typeParam T  any class that implements ComponentIdentifier
+   * @param entityId  id of entity that is supposed to be updated
+   * @param component  a new component to be connected with given entity.
+   * @param builder  Used by the EntityBuilder to cache itself, can be ignored usually
+   */
   public addComponent<T extends ComponentIdentifier>(entityId: number, component: T, builder?: EntityBuilder): EntityBuilder {
     const compName = component.identifier();
     if (!this.components.has(compName)) {
@@ -94,6 +167,11 @@ export class ECSManager {
     return builder ?? new EntityBuilder(entityId, this);
   }
 
+  /**
+   * @param entityId  id of entity that is supposed to be updated
+   * @param identifier   the type identifier for the component you want to remove
+   * @param builder  Used by the EntityBuilder to cache itself, can be ignored usually
+   */
   public removeComponent(entityId: number, identifier: string, builder?: EntityBuilder): EntityBuilder {
     const components = this.components.get(identifier).filter(c => c.entityId !== entityId);
     this.components.set(identifier, components);
@@ -102,7 +180,12 @@ export class ECSManager {
     return builder ?? new EntityBuilder(entityId, this);
   }
 
-  // TODO: this should be refactored when query structure is changed
+  /**
+   * @param query  filter for which entities to retrieve
+   * @return returns a object containing entities that are meant to
+   * be iterated by the manager under dispatch/event and shared entities that
+   * will be shared each iteration
+   */
   public queryEntities(query: EscQuery): EntityQueryResult {
     const entityIdReducer = (previousValues: Entity[], value: Component<object>) => {
       if (!previousValues.find(n => n.id === value.entityId)) {
@@ -180,6 +263,11 @@ export class ECSManager {
     return result;
   }
 
+  /**
+   * @param query  filter for which components to retrieve
+   * @return  similarly to {@link ECSManager.queryEntities} with added relevant components connected
+   * to given entities
+   */
   public queryComponents(query: EscQuery): ComponentQueryResult {
     const entityResult = this.queryEntities(query);
 
@@ -253,7 +341,17 @@ export class ECSManager {
   }
 
   // TODO: there should be an alternative one where you use entityId and identifier
-  public accessComponentData<T extends ComponentIdentifier>(compType: T, index: number): T {
+  /**
+   * Retrieves a component from the internal storage
+   *
+   * @typeParam T  any class that implements ComponentIdentifier
+   *
+   * @param compType any instance of same type as target component
+   * @param index index of the component in the internal storage
+   *
+   * @return requested component or null
+   */
+  public accessComponentData<T extends ComponentIdentifier>(compType: T, index: number): T | null {
     if (index < 0) {
       return null;
     }
@@ -266,6 +364,11 @@ export class ECSManager {
     return components[index].data as T;
   }
 
+  /**
+   * Invokes a system event and supplies them with relevant based on previous query arguments
+   * @param index The index of the event being fired
+   * @param event Event data
+   */
   public onEvent(index: number, event: Event) {
     const subscriber = this.events[index];
     let sharedArgs: Component<object>[] = null;
@@ -282,6 +385,10 @@ export class ECSManager {
     }
   }
 
+  /**
+   * Invokes all normal systems and supplies them with relevant based on previous query arguments
+   * and a common delta time
+   */
   public dispatch() {
     this.prevRun = (this.prevRun) ? this.prevRun : Date.now();
 
@@ -308,6 +415,9 @@ export class ECSManager {
   }
 
   // TODO: this probably causes GC spikes
+  /**
+   * @ignore
+   */
   private createArgs(entry: EntityEntry): Component<object>[] {
     const args = [];
     for (const component of entry.components) {
@@ -319,6 +429,9 @@ export class ECSManager {
   }
 
   // TODO: this can be optimized!
+  /**
+   * @ignore
+   */
   private invalidateQueryResults(): void {
     for (const system of this.systems) {
       system.qResult = this.queryComponents(system.query);

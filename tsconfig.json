@@ -18,5 +18,10 @@
         "declarationMap": true,
         "esModuleInterop": true,
         "jsx": "react"
+    },
+    "typedocOptions": {
+        "inputFiles": ["./ecs", "index.ts"],
+        "mode": "modules",
+        "out": "docs"
     }
   }
