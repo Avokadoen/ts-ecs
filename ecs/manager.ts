@@ -6,7 +6,7 @@ import {ComponentIdentifier} from './component-identifier.model';
 
 // TODO: currently does not support multiple components of same type on one entity
 //        - this silently fails when you add same type again, no error, memory leak created, queries broken
-// TODO: All query results must be invalidated on change in entity/component
+// TODO: System args should be cached, and not created each frame
 // TODO: Event handling requires callee to keep relevant index to event. This should be encapsulated to reduce errors
 // TODO: entity id should be defined by callee or generated if not definer. Should fail somehow if taken
 // TODO: documentation using http://typedoc.org/
@@ -15,6 +15,7 @@ import {ComponentIdentifier} from './component-identifier.model';
 // TODO: register event could use observables to simplify api
 // TODO: error object on invalid queries etc
 // TODO: interpret query string to EscQuery
+// TODO: delete entity function (make sure to remove all components also)
 
 /**
  * Builder for entities. Enables end user to chain operations.
@@ -381,7 +382,10 @@ export class ECSManager {
 
     for (const entity of subscriber.qResult.entities) {
       const args = this.createArgs(entity);
-      this.events[index].system(event, args, sharedArgs);
+      const changedStorage = this.events[index].system(event, args, sharedArgs);
+      if (changedStorage === true) {
+        break;
+      }
     }
   }
 
@@ -407,7 +411,10 @@ export class ECSManager {
 
       for (const entity of system.qResult.entities) {
         let args = this.createArgs(entity);
-        system.system(deltaTime, args, sharedArgs);
+        const changedStorage = system.system(deltaTime, args, sharedArgs);
+        if (changedStorage === true) {
+          break;
+        }
       }
     }
 
@@ -415,6 +422,8 @@ export class ECSManager {
   }
 
   // TODO: this probably causes GC spikes
+  //       we can cache this in the ComponentQueryResult and only create on
+  //       invalidated query
   /**
    * @ignore
    */

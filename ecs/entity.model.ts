@@ -6,3 +6,4 @@ export interface EntityEntry {
   id: number;
   components: Map<string, number>;
 }
+
