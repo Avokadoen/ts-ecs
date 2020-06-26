@@ -16,4 +16,3 @@ export interface System<T> {
   qResult: ComponentQueryResult;
   system: SystemFn<T>;
 }
-

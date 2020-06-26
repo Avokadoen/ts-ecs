@@ -1,4 +1,5 @@
 import {Entity, EntityEntry} from './entity.model';
+import {Component} from './component.model';
 
 /**
  * The result of {@link ECSManager.queryEntities}
@@ -12,7 +13,7 @@ export interface EntityQueryResult {
  * The result of {@link ECSManager.queryComponents}
  */
 export interface ComponentQueryResult {
-  sharedEntities?: EntityEntry[];
+  sharedArgs?: Component<object>[];
   entities: EntityEntry[];
 }
 

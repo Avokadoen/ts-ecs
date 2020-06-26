@@ -218,7 +218,7 @@ describe('Query Entities', () => {
         expect(manager.queryEntities(query).entities).toEqual([{ id: 4 }, { id: 6 }], "Query returned unexpected result");
     });
 
-    it('Should succeed on "AND" and "OR_SHARED" comp query entity', () => {
+    it('Should succeed on "AND" and "SHARED" comp query entity', () => {
         const query = [
             {
                 componentIdentifier: TestCompOne.identifier,
@@ -240,6 +240,27 @@ describe('Query Entities', () => {
         expect(result.sharedEntities).toEqual([{id: 6}], "Query returned unexpected result");
     });
 
+    it('Should succeed on "OR" and "SHARED" comp query entity', () => {
+        const query = [
+            {
+                componentIdentifier: TestCompOne.identifier,
+                token: QueryToken.FIRST
+            },
+            {
+                componentIdentifier: TestCompFour.identifier,
+                token: QueryToken.SHARED
+            },
+            {
+                componentIdentifier: TestCompThree.identifier,
+                token: QueryToken.OR
+            }
+        ];
+
+        const result = manager.queryEntities(query);
+
+        expect(result.entities.sort(sortFn)).toEqual([{ id: 0 }, { id: 3 }, { id: 5 }], "Query returned unexpected result");
+        expect(result.sharedEntities.sort(sortFn)).toEqual([{id: 3}, {id: 4}, {id: 5}, {id: 6}], "Query returned unexpected result");
+    });
 
     describe('Bigger data set', () => {
         const _manager = new ECSManager();
@@ -291,6 +312,7 @@ describe('Query Entities', () => {
 
 });
 
+// TODO: test shared args
 describe('Query runtime components', () => {
     let manager: ECSManager;
 
@@ -313,7 +335,7 @@ describe('Query runtime components', () => {
                     components: new Map()
                 }
             ],
-            sharedEntities: null
+            sharedArgs: null
         };
         expected.entities[0].components.set(TestCompTwo.identifier, 0);
 
@@ -343,7 +365,7 @@ describe('Query runtime components', () => {
                     components: new Map()
                 }
             ],
-            sharedEntities: null
+            sharedArgs: null
         };
         expected.entities[0].components.set(TestCompOne.identifier, 1);
         expected.entities[0].components.set(TestCompThree.identifier, 0);
@@ -502,7 +524,7 @@ describe('Systems', () => {
         expect(compFourRef.someState).toBe(2, 'Shared state was not mutated');
     });
 
-    it('Should share entity between entities in system event', () => {
+    it('Should share entity between entities in system event with AND', () => {
         const manager = new ECSManager();
 
         const compFourRef = new TestCompFour(0);
@@ -533,5 +555,46 @@ describe('Systems', () => {
         manager.onEvent(index, null);
 
         expect(compFourRef.someState).toBe(2, 'Shared state was not mutated');
+    });
+
+    it('Should share entity between entities in system event with OR', () => {
+        const manager = new ECSManager();
+
+        const compFourRef = new TestCompFour(0);
+        manager.createEntity()
+            .addComponent(compFourRef);
+
+        manager.createEntity().addComponent(new TestCompOne());
+        manager.createEntity().addComponent(new TestCompOne());
+
+        const query = [
+            {
+                componentIdentifier: TestCompFour.identifier,
+                token: QueryToken.FIRST
+            },
+            {
+                componentIdentifier: TestCompFour.identifier,
+                token: QueryToken.SHARED
+            },
+            {
+                componentIdentifier: TestCompOne.identifier,
+                token: QueryToken.OR
+            },
+        ];
+
+        const sharedStateOrQuerySystem = <T>(
+            _: T,
+            args: Component<TestCompOne>[],
+            sharedArgs: Component<TestCompFour>[]) => {
+            const shared = sharedArgs[0].data;
+
+            shared.someState = sharedArgs.length;
+        };
+
+        const index = manager.registerEvent(sharedStateOrQuerySystem, query);
+
+        manager.onEvent(index, null);
+
+        expect(compFourRef.someState).toBe(3, 'Shared state was not mutated');
     });
 });

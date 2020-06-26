@@ -16,6 +16,10 @@ import {ComponentIdentifier} from './component-identifier.model';
 // TODO: error object on invalid queries etc
 // TODO: interpret query string to EscQuery
 // TODO: delete entity function (make sure to remove all components also)
+// TODO: instead of return bool on system. We should wait with removing components until we are done
+//       with dispatch!
+// TODO: Bug with shared followed by OR
+// TODO: move TODO's to issues on github
 
 /**
  * Builder for entities. Enables end user to chain operations.
@@ -270,11 +274,12 @@ export class ECSManager {
    * to given entities
    */
   public queryComponents(query: EscQuery): ComponentQueryResult {
+    // TODO: comment code (not just here)
     const entityResult = this.queryEntities(query);
 
     const result: ComponentQueryResult = {
       entities: [],
-      sharedEntities: (entityResult.sharedEntities) ? [] : null
+      sharedArgs: (entityResult.sharedEntities) ? [] : null
     };
 
     let isBeforeShared = false;
@@ -332,10 +337,15 @@ export class ECSManager {
       return previousValues;
     }, []);
 
+    let sharedEntities: EntityEntry[] = [];
     for (const cId of sharedIds) {
       for (const entity of entityResult.sharedEntities) {
-        result.sharedEntities = setEntityEntry(cId, entity, result.sharedEntities);
+        sharedEntities = setEntityEntry(cId, entity, sharedEntities);
       }
+    }
+
+    for (const entity of sharedEntities) {
+      result.sharedArgs = result.sharedArgs.concat(this.createArgs(entity));
     }
 
     return result;
@@ -372,17 +382,10 @@ export class ECSManager {
    */
   public onEvent(index: number, event: Event) {
     const subscriber = this.events[index];
-    let sharedArgs: Component<object>[] = null;
-    if (subscriber.qResult.sharedEntities) {
-      sharedArgs = [];
-      for (const entity of subscriber.qResult.sharedEntities) {
-        sharedArgs = sharedArgs.concat(this.createArgs(entity));
-      }
-    }
 
     for (const entity of subscriber.qResult.entities) {
       const args = this.createArgs(entity);
-      const changedStorage = this.events[index].system(event, args, sharedArgs);
+      const changedStorage = this.events[index].system(event, args, subscriber.qResult.sharedArgs);
       if (changedStorage === true) {
         break;
       }
@@ -401,17 +404,9 @@ export class ECSManager {
     const deltaTime = (now - this.prevRun) / 1000;
 
     for (const system of this.systems) {
-      let sharedArgs: Component<object>[] = null;
-      if (system.qResult.sharedEntities) {
-        sharedArgs = [];
-        for (const shared of system.qResult.sharedEntities) {
-          sharedArgs = sharedArgs.concat(this.createArgs(shared));
-        }
-      }
-
       for (const entity of system.qResult.entities) {
         let args = this.createArgs(entity);
-        const changedStorage = system.system(deltaTime, args, sharedArgs);
+        const changedStorage = system.system(deltaTime, args, system.qResult.sharedArgs);
         if (changedStorage === true) {
           break;
         }
