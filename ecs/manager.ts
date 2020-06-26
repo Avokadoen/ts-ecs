@@ -168,7 +168,7 @@ export class ECSManager {
     const actualComponent = {entityId, data: component};
     this.components.get(compName).push(actualComponent);
 
-    this.invalidateQueryResults();
+    this.invalidateQueryResults(compName);
     return builder ?? new EntityBuilder(entityId, this);
   }
 
@@ -181,7 +181,7 @@ export class ECSManager {
     const components = this.components.get(identifier).filter(c => c.entityId !== entityId);
     this.components.set(identifier, components);
 
-    this.invalidateQueryResults();
+    this.invalidateQueryResults(identifier);
     return builder ?? new EntityBuilder(entityId, this);
   }
 
@@ -436,12 +436,19 @@ export class ECSManager {
   /**
    * @ignore
    */
-  private invalidateQueryResults(): void {
+  private invalidateQueryResults(changedIdentifier: string): void {
+    const updatedSystem = <T>(system: System<T>) => {
+      if (system.query.find(q => q.componentIdentifier === changedIdentifier)) {
+        return this.queryComponents(system.query);
+      }
+      return system.qResult;
+    };
+
     for (const system of this.systems) {
-      system.qResult = this.queryComponents(system.query);
+      system.qResult = updatedSystem(system);
     }
     for (const system of this.events) {
-      system.qResult = this.queryComponents(system.query);
+      system.qResult = updatedSystem(system);
     }
   }
 }
