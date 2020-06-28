@@ -65,6 +65,11 @@ export class EntityBuilder {
   }
 }
 
+interface DeleteEntry {
+  entityId: number;
+  identifier: string;
+}
+
 /**
  * The main class, and usually a singleton for your program that will manage your game state
  */
@@ -98,6 +103,9 @@ export class ECSManager {
    * @ignore
    */
   private prevRun: number;
+
+  private isRunningSystems = false;
+  private toBeDeleted: DeleteEntry[] = [];
 
   /**
    * A system meant to be called manually by the callee
@@ -143,18 +151,6 @@ export class ECSManager {
     return new EntityBuilder(this.entityId - 1, this);
   }
 
-  /**
-   * @typeParam T  any class that implements ComponentIdentifier
-   * @param components  an array of components that are to be added to a new entity
-   */
-  public createEntityWithComponents<T extends ComponentIdentifier>(components: T[]): EntityBuilder {
-    const entityBuilder = this.createEntity();
-    for (const component of components) {
-      this.addComponent(entityBuilder.entityId, component);
-    }
-    return new EntityBuilder(this.entityId - 1, this);
-  }
-
   // TODO: update relevant systems query results (see top todo)
   /**
    * @typeParam T  any class that implements ComponentIdentifier
@@ -180,6 +176,10 @@ export class ECSManager {
    * @param builder  Used by the EntityBuilder to cache itself, can be ignored usually
    */
   public removeComponent(entityId: number, identifier: string, builder?: EntityBuilder): EntityBuilder {
+    if (this.isRunningSystems) {
+      this.toBeDeleted.push({entityId, identifier});
+    }
+
     const components = this.components.get(identifier).filter(c => c.entityId !== entityId);
     this.components.set(identifier, components);
 
@@ -320,14 +320,16 @@ export class ECSManager {
    * @param event Event data
    */
   public onEvent(index: number, event: Event) {
+    this.isRunningSystems = true;
     const subscriber = this.events[index];
 
     for (const entity of subscriber.qResult.entities) {
       const args = this.createArgs(entity);
-      const changedStorage = this.events[index].system(event, args, subscriber.qResult.sharedArgs);
-      if (changedStorage === true) {
-        break;
-      }
+      this.events[index].system(event, args, subscriber.qResult.sharedArgs);
+    }
+    this.isRunningSystems = false;
+    for (const next of this.toBeDeleted) {
+      this.removeComponent(next.entityId, next.identifier);
     }
   }
 
@@ -336,6 +338,8 @@ export class ECSManager {
    * and a common delta time
    */
   public dispatch() {
+    this.isRunningSystems = true;
+    
     this.prevRun = (this.prevRun) ? this.prevRun : Date.now();
 
     const now = Date.now();
@@ -345,13 +349,14 @@ export class ECSManager {
     for (const system of this.systems) {
       for (const entity of system.qResult.entities) {
         let args = this.createArgs(entity);
-        const changedStorage = system.system(deltaTime, args, system.qResult.sharedArgs);
-        if (changedStorage === true) {
-          break;
-        }
+        system.system(deltaTime, args, system.qResult.sharedArgs);
       }
     }
 
+    this.isRunningSystems = false;
+    for (const next of this.toBeDeleted) {
+      this.removeComponent(next.entityId, next.identifier);
+    }
     this.prevRun = now;
   }
 
