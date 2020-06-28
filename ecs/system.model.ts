@@ -1,4 +1,4 @@
-import {ComponentQueryResult, EscQuery} from './esc-query.model';
+import {EscQuery, EntityQueryResult} from './esc-query.model';
 import {Component} from './component.model';
 
 
@@ -13,6 +13,6 @@ export type SystemFn<T> = (required: T, args: Component<Object>[], sharedArgs?: 
  */
 export interface System<T> {
   query: EscQuery;
-  qResult: ComponentQueryResult;
+  qResult: EntityQueryResult;
   system: SystemFn<T>;
 }

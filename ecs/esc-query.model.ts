@@ -1,18 +1,10 @@
-import {Entity, EntityEntry} from './entity.model';
+import { EntityEntry} from './entity.model';
 import {Component} from './component.model';
 
 /**
  * The result of {@link ECSManager.queryEntities}
  */
 export interface EntityQueryResult {
-  sharedEntities?: Entity[];
-  entities: Entity[];
-}
-
-/**
- * The result of {@link ECSManager.queryComponents}
- */
-export interface ComponentQueryResult {
   sharedArgs?: Component<object>[];
   entities: EntityEntry[];
 }
@@ -21,16 +13,15 @@ export interface ComponentQueryResult {
 /**
  * A complete query that can be used by {@link ECSManager}
  */
-export type EscQuery = QueryNode[];
+export type EscQuery = QueryNode;
 
 /**
  * Defines the end user intent with a given {@link QueryNode}
  */
 export enum QueryToken {
-  FIRST,
   AND,
   OR,
-  AND_NOT,
+  NOT,
   SHARED,
 }
 
@@ -38,6 +29,19 @@ export enum QueryToken {
  * One node in a query used to retrieve entities and components
  */
 export interface QueryNode {
-  componentIdentifier: string;
   token: QueryToken;
+  left_sibling?: QueryNode | QueryLeafNode;
+  right_sibling?: QueryNode | QueryLeafNode;
+}
+
+export interface QueryLeafNode {
+  identifier: string;
+}
+
+export function isQueryNode(node: QueryNode | QueryLeafNode): node is QueryNode {
+  return (node as QueryNode).token !== undefined;
+}
+
+export function isQueryLeafNode(node: QueryNode | QueryLeafNode): node is QueryLeafNode {
+  return (node as QueryLeafNode).identifier !== undefined;
 }

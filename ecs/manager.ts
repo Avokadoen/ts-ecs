@@ -1,7 +1,7 @@
 import {System, SystemFn} from './system.model';
 import {Entity, EntityEntry} from './entity.model';
 import {Component} from './component.model';
-import {ComponentQueryResult, EntityQueryResult, EscQuery, QueryNode, QueryToken} from './esc-query.model';
+import {EntityQueryResult, EscQuery, QueryNode, QueryToken, isQueryNode, QueryLeafNode, isQueryLeafNode} from './esc-query.model';
 import {ComponentIdentifier} from './component-identifier.model';
 
 // TODO: currently does not support multiple components of same type on one entity
@@ -20,6 +20,8 @@ import {ComponentIdentifier} from './component-identifier.model';
 //       with dispatch!
 // TODO: Bug with shared followed by OR
 // TODO: move TODO's to issues on github
+// TODO: make specification for query syntax tree
+//      - also for callee syntax
 
 /**
  * Builder for entities. Enables end user to chain operations.
@@ -109,7 +111,7 @@ export class ECSManager {
     : number {
     this.events.push({
       query,
-      qResult: this.queryComponents(query),
+      qResult: this.queryEntities(query),
       system
     });
 
@@ -128,7 +130,7 @@ export class ECSManager {
     : void {
     this.systems.push({
       query,
-      qResult: this.queryComponents(query),
+      qResult: this.queryEntities(query),
       system
     });
   }
@@ -192,162 +194,99 @@ export class ECSManager {
    * will be shared each iteration
    */
   public queryEntities(query: EscQuery): EntityQueryResult {
-    const entityIdReducer = (previousValues: Entity[], value: Component<object>) => {
-      if (!previousValues.find(n => n.id === value.entityId)) {
-        previousValues.push({ id: value.entityId });
+    const entityIdReducer = (previousValues: EntityEntry[], value: Component<object>, currentIndex: number): EntityEntry[] => {
+      const existing = previousValues.find(n => n.id === value.entityId);
+      if (!existing) {
+        let newEntry: EntityEntry = { id: value.entityId, components: new Map() };
+        newEntry.components.set((value.data as ComponentIdentifier).identifier(), currentIndex);
+        previousValues.push(newEntry);
+      } else {
+        existing.components.set((value.data as ComponentIdentifier).identifier(), currentIndex);
       }
       return previousValues;
     };
 
-    const orReducer = (previousValues: Entity[], value: Entity) => {
+    const andFn = (thisResult: EntityEntry[], values: EntityEntry[]): EntityEntry[] => {
+      const least = (thisResult.length < values.length) ? thisResult : values;
+      const biggest = (thisResult.length >= values.length) ? thisResult : values;
+      values = [];
+      for (const bEntity of biggest) {
+        const lEntity = least.find(e => e.id === bEntity.id);
+        if (lEntity) {
+          const value = {
+            id: lEntity.id,
+            components: new Map(function*() { yield* bEntity.components; yield* lEntity.components; }())
+          };
+          values.push(value);
+        }
+      }
+      return values;
+    }
+
+    const orReducer = (previousValues: EntityEntry[], value: EntityEntry) => {
       if (!previousValues.find(n => n.id === value.id)) {
         previousValues.push(value);
       }
       return previousValues;
     };
 
-    let result: EntityQueryResult =  {
-      sharedEntities: null,
-      entities: []
-    };
-
-    const andFn = (thisResult: Entity[], values: Entity[]) => {
-      const least = (thisResult.length < values.length) ? thisResult : values;
-      const biggest = (thisResult.length >= values.length) ? thisResult : values;
-      values = [];
-      for (const r of biggest) {
-        if (least.find(b => b.id === r.id)) {
-          values.push(r);
-        }
+    const queryStep = (query: QueryNode | QueryLeafNode | null): EntityEntry[] => {
+      if (!query) {
+        return [];
       }
 
-      return values;
-    };
+      if (isQueryNode(query)) {
+        const qLResult = queryStep(query.left_sibling);
+        const qRResult = queryStep(query.right_sibling);
 
-    let isSharedState = false;
-    for (const q of query) {
-      const components = this.components.get(q.componentIdentifier);
-
-      const thisResult: Entity[] = components?.filter(c => !isNaN(c.entityId)).reduce(entityIdReducer, []) ?? [];
-      let workingEntities = (isSharedState) ? (result.sharedEntities ?? []) : result.entities;
-
-      switch (q.token) {
-        case QueryToken.FIRST:
-          workingEntities = thisResult;
-          break;
-
-        case QueryToken.AND:
-          workingEntities = andFn(thisResult, workingEntities);
-          break;
-
-        case QueryToken.OR:
-          workingEntities = workingEntities.concat(thisResult).reduce(orReducer, []);
-          break;
-
-        case QueryToken.AND_NOT: {
-          workingEntities = workingEntities.filter(entity => !thisResult.find((oe: Entity) => oe.id == entity.id));
-          break;
+        switch (query.token) {
+          case QueryToken.AND:
+            return andFn(qLResult, qRResult);
+          case QueryToken.OR:
+            return qLResult.concat(qRResult).reduce(orReducer, []);
+          case QueryToken.NOT:
+            return qLResult.filter(entity => !qRResult.find((oe: Entity) => oe.id == entity.id));
+          case QueryToken.SHARED: 
+            return [];
         }
-
-        case QueryToken.SHARED: {
-          result.sharedEntities = result.sharedEntities ?? [];
-          workingEntities = result.sharedEntities;
-          workingEntities = workingEntities.concat(thisResult).reduce(orReducer, []);
-          isSharedState = true;
-          break;
-        }
-      }
-
-      if (isSharedState) {
-        result.sharedEntities = workingEntities;
       } else {
-        result.entities = workingEntities;
+        const components = this.components.get(query.identifier);
+        const thisResult: EntityEntry[] = components?.filter(c => !isNaN(c.entityId)).reduce(entityIdReducer, []) ?? [];
+        return thisResult;
       }
     }
 
-    return result;
-  }
+    const findShared = (query: QueryNode | QueryLeafNode): QueryNode | null => {
+      if (!query || isQueryLeafNode(query)) {
+        return null;
+      }
 
-  /**
-   * @param query  filter for which components to retrieve
-   * @return  similarly to {@link ECSManager.queryEntities} with added relevant components connected
-   * to given entities
-   */
-  public queryComponents(query: EscQuery): ComponentQueryResult {
-    // TODO: comment code (not just here)
-    const entityResult = this.queryEntities(query);
+      if (query.token === QueryToken.SHARED) {
+        return query;
+      }
 
-    const result: ComponentQueryResult = {
-      entities: [],
-      sharedArgs: (entityResult.sharedEntities) ? [] : null
+      const leftList = findShared(query.left_sibling);
+      const rightList = findShared(query.right_sibling);
+
+      return leftList ?? rightList;
+    }
+
+    const sharedNode = findShared(query);
+    const sharedEntityEntries = sharedNode ? queryStep(sharedNode.left_sibling) : null;
+
+    let sharedArgs: Component<object>[] | null = null;
+    if (sharedEntityEntries) {
+      sharedArgs = [];
+      for (const entry of sharedEntityEntries) {
+        sharedArgs = sharedArgs.concat(this.createArgs(entry));
+      }
+    }
+
+    let result: EntityQueryResult =  {
+      sharedArgs,
+      entities: queryStep(query),
     };
-
-    let isBeforeShared = false;
-    const componentIds = query.reduce((previousValues: string[], value: QueryNode) => {
-      if (value.token === QueryToken.SHARED || isBeforeShared) {
-        isBeforeShared = true;
-        return previousValues;
-      }
-
-      if (!previousValues.find(cId => cId === value.componentIdentifier)) {
-        previousValues.push(value.componentIdentifier);
-      }
-      return previousValues;
-    }, []);
-
-    const setEntityEntry = (cId: string, entity: Entity, values: EntityEntry[]) => {
-      const compIndex = this.components.get(cId).findIndex(c => c.entityId === entity.id);
-      if (compIndex >= 0) {
-        const indexOf = values.findIndex(entry => entry.id === entity.id);
-        if (indexOf === -1) {
-          values.push({
-            id: entity.id,
-            components: new Map<string, number>()
-          });
-        }
-        values.find(entry => entry.id === entity.id).components.set(cId, compIndex);
-      }
-
-      return values;
-    };
-
-    for (const cId of componentIds) {
-      for (const entity of entityResult.entities) {
-        result.entities = setEntityEntry(cId, entity, result.entities);
-      }
-    }
-
-    if (!entityResult.sharedEntities) {
-      return result;
-    }
-
-    let isAfterShared = false;
-    const sharedIds = query.reduce((previousValues: string[], value: QueryNode) => {
-      if (value.token === QueryToken.SHARED) {
-        isAfterShared = true;
-      }
-
-      if (!isAfterShared) {
-        return previousValues;
-      }
-
-      if (!previousValues.find(cId => cId === value.componentIdentifier)) {
-        previousValues.push(value.componentIdentifier);
-      }
-      return previousValues;
-    }, []);
-
-    let sharedEntities: EntityEntry[] = [];
-    for (const cId of sharedIds) {
-      for (const entity of entityResult.sharedEntities) {
-        sharedEntities = setEntityEntry(cId, entity, sharedEntities);
-      }
-    }
-
-    for (const entity of sharedEntities) {
-      result.sharedArgs = result.sharedArgs.concat(this.createArgs(entity));
-    }
-
+    
     return result;
   }
 
@@ -437,9 +376,31 @@ export class ECSManager {
    * @ignore
    */
   private invalidateQueryResults(changedIdentifier: string): void {
+    const isComponentInQuery = (identifier: string, node: QueryNode | QueryLeafNode | null): boolean => {
+      if (!node) {
+        return false;
+      }
+
+      if (isQueryNode(node)) {
+        const leftFind = isComponentInQuery(identifier, node.left_sibling);
+        if (leftFind) {
+          return true;
+        }
+
+        const rightFind = isComponentInQuery(identifier, node.right_sibling);
+        if (rightFind) {
+          return true;
+        }
+
+        return false;
+      } else {
+        return node.identifier === identifier;
+      }
+    }
+
     const updatedSystem = <T>(system: System<T>) => {
-      if (system.query.find(q => q.componentIdentifier === changedIdentifier)) {
-        return this.queryComponents(system.query);
+      if (isComponentInQuery(changedIdentifier, system.query)) {
+        return this.queryEntities(system.query);
       }
       return system.qResult;
     };
