@@ -9,7 +9,7 @@ describe('Query runtime components', () => {
     it('Should find TestComponentTwo component', () => {
         const query: QueryNode = {
             token: QueryToken.OR,
-            left_sibling: {
+            leftChild: {
                 identifier: TestCompTwo.identifier
             }
         };
@@ -31,10 +31,10 @@ describe('Query runtime components', () => {
     it('Should find TestComponentOne "AND" TestComponentThree component', () => {
         const query: QueryNode = {
             token: QueryToken.AND,
-            left_sibling: {
+            leftChild: {
                 identifier: TestCompOne.identifier
             },
-            right_sibling: {
+            rightChild: {
                 identifier: TestCompThree.identifier
             }
         };

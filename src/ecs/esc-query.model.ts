@@ -24,13 +24,28 @@ export enum QueryToken {
   SHARED,
 }
 
+export function queryTokenFromString(value: string): QueryToken | null {
+  switch (value?.toLowerCase()) {
+    case 'and':
+      return QueryToken.AND;
+    case 'or':
+      return QueryToken.OR;
+    case 'not':
+      return QueryToken.NOT;
+    case 'shared':
+      return QueryToken.SHARED;
+    default:
+      return null;
+  }
+}
+
 /**
  * One node in a query used to retrieve entities and components
  */
 export interface QueryNode {
   token: QueryToken;
-  left_sibling?: QueryNode | QueryLeafNode;
-  right_sibling?: QueryNode | QueryLeafNode;
+  leftChild?: QueryNode | QueryLeafNode;
+  rightChild?: QueryNode | QueryLeafNode;
 }
 
 export interface QueryLeafNode {

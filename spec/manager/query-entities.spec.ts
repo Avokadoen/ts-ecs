@@ -22,7 +22,7 @@ describe('Query Entities', () => {
     it('Should succeed on single comp query with AND root entity', () => {
         const query: QueryNode = {
             token: QueryToken.AND,
-            left_sibling: {
+            leftChild: {
                 identifier: TestCompTwo.identifier
             }
         };
@@ -35,7 +35,7 @@ describe('Query Entities', () => {
     it('Should succeed on single comp query with OR root entity', () => {
         const query: QueryNode = {
             token: QueryToken.OR,
-            left_sibling: {
+            leftChild: {
                 identifier: TestCompTwo.identifier
             }
         };
@@ -48,7 +48,7 @@ describe('Query Entities', () => {
     it('Should succeed on multiple comp query entity', () => {
         const query: QueryNode = {
             token: QueryToken.OR,
-            left_sibling: {
+            leftChild: {
                 identifier: TestCompOne.identifier
             }
         };
@@ -62,10 +62,10 @@ describe('Query Entities', () => {
 
         const query: QueryNode = {
             token: QueryToken.AND,
-            left_sibling: {
+            leftChild: {
                 identifier: TestCompOne.identifier
             },
-            right_sibling: {
+            rightChild: {
                 identifier: TestCompThree.identifier
             }
         };
@@ -79,10 +79,10 @@ describe('Query Entities', () => {
     it('Should succeed on "AND" any order', () => {
         const query: QueryNode = {
             token: QueryToken.AND,
-            left_sibling: {
+            leftChild: {
                 identifier: TestCompThree.identifier
             },
-            right_sibling: {
+            rightChild: {
                 identifier: TestCompOne.identifier
             }
         };
@@ -96,10 +96,10 @@ describe('Query Entities', () => {
     it('Should succeed on "OR" comp query entity', () => {
         const query: QueryNode = {
             token: QueryToken.OR,
-            left_sibling: {
+            leftChild: {
                 identifier: TestCompThree.identifier
             },
-            right_sibling: {
+            rightChild: {
                 identifier: TestCompTwo.identifier
             }
         };
@@ -113,10 +113,10 @@ describe('Query Entities', () => {
     it('Should succeed on "NOT" comp query entity', () => {
         const query: QueryNode = {
             token: QueryToken.NOT,
-            left_sibling: {
+            leftChild: {
                 identifier: TestCompThree.identifier
             },
-            right_sibling: {
+            rightChild: {
                 identifier: TestCompOne.identifier
             }
         };
@@ -130,17 +130,17 @@ describe('Query Entities', () => {
     it('Should succeed on "AND" and "SHARED" comp query entity', () => {
         const query: QueryNode = {
             token: QueryToken.OR,
-            left_sibling: {
+            leftChild: {
                 identifier: TestCompOne.identifier
             },
-            right_sibling: {
+            rightChild: {
                 token: QueryToken.SHARED,
-                left_sibling: {
+                leftChild: {
                     token: QueryToken.AND,
-                    left_sibling: {
+                    leftChild: {
                         identifier: TestCompFour.identifier
                     },
-                    right_sibling: {
+                    rightChild: {
                         identifier: TestCompThree.identifier
                     }
                 },
@@ -156,17 +156,17 @@ describe('Query Entities', () => {
     it('Should succeed on "OR" and "SHARED" comp query entity', () => {
         const query: QueryNode = {
             token: QueryToken.OR,
-            left_sibling: {
+            leftChild: {
                 identifier: TestCompOne.identifier
             },
-            right_sibling: {
+            rightChild: {
                 token: QueryToken.SHARED,
-                left_sibling: {
+                leftChild: {
                     token: QueryToken.OR,
-                    left_sibling: {
+                    leftChild: {
                         identifier: TestCompFour.identifier
                     },
-                    right_sibling: {
+                    rightChild: {
                         identifier: TestCompThree.identifier
                     }
                 },
@@ -193,10 +193,10 @@ describe('Query Entities', () => {
         it('Should find all entities meeting requirement', () => {
             const query: QueryNode = {
                 token: QueryToken.AND,
-                left_sibling: {
+                leftChild: {
                     identifier: TestCompOne.identifier
                 },
-                right_sibling: {
+                rightChild: {
                     identifier: TestCompFour.identifier
                 }
             };
@@ -209,10 +209,10 @@ describe('Query Entities', () => {
         it('Should filter all entities not meeting requirement', () => {
             const query: QueryNode = {
                 token: QueryToken.AND,
-                left_sibling: {
+                leftChild: {
                     identifier: TestCompOne.identifier
                 },
-                right_sibling: {
+                rightChild: {
                     identifier: TestCompThree.identifier
                 }
             };

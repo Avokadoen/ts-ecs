@@ -6,13 +6,12 @@ import { ECSManager } from "../../src/ecs/manager";
 describe('Systems', () => {
     const testSystem = <T>(_: T, args: Component<TestCompFour>[]) => {
         const testCompFour = args[0].data;
-
         testCompFour.someState += 1;
     };
 
-    const query = {
+    const query: QueryNode = {
         token: QueryToken.OR,
-        left_sibling: {
+        leftChild: {
             identifier: TestCompFour.identifier
         }
     };
@@ -22,7 +21,6 @@ describe('Systems', () => {
 
         const compFourRef = new TestCompFour(0);
         manager.createEntity().addComponent(compFourRef);
-
 
         manager.registerSystem(testSystem, query);
 
@@ -60,14 +58,14 @@ describe('Systems', () => {
         manager.createEntity().addComponent(new TestCompOne());
         manager.createEntity().addComponent(new TestCompOne());
 
-        const deleteQuery = {
+        const deleteQuery: QueryNode = {
             token: QueryToken.OR,
-            left_sibling: {
+            leftChild: {
                 identifier: TestCompOne.identifier
             },
-            right_sibling: {
+            rightChild: {
                 token: QueryToken.SHARED,
-                left_sibling: {
+                leftChild: {
                     identifier: TestCompFour.identifier
                 }
             }
@@ -97,14 +95,14 @@ describe('Systems', () => {
 
         manager.createEntity().addComponent(new TestCompOne());
 
-        const addQuery = {
+        const addQuery: QueryNode = {
             token: QueryToken.OR,
-            left_sibling: {
+            leftChild: {
                 identifier: TestCompOne.identifier
             },
-            right_sibling: {
+            rightChild: {
                 token: QueryToken.SHARED,
-                left_sibling: {
+                leftChild: {
                     identifier: TestCompFour.identifier
                 }
             }
@@ -184,17 +182,17 @@ describe('Systems', () => {
 
         const query: QueryNode = {
             token: QueryToken.OR,
-            left_sibling: {
+            leftChild: {
                 identifier: TestCompOne.identifier
             },
-            right_sibling: {
+            rightChild: {
                 token: QueryToken.SHARED,
-                left_sibling: {
+                leftChild: {
                     token: QueryToken.AND,
-                    left_sibling: {
+                    leftChild: {
                         identifier: TestCompFour.identifier
                     },
-                    right_sibling: {
+                    rightChild: {
                         identifier: TestCompThree.identifier
                     }
                 },
@@ -221,17 +219,17 @@ describe('Systems', () => {
 
         const query: QueryNode = {
             token: QueryToken.OR,
-            left_sibling: {
+            leftChild: {
                 identifier: TestCompOne.identifier
             },
-            right_sibling: {
+            rightChild: {
                 token: QueryToken.SHARED,
-                left_sibling: {
+                leftChild: {
                     token: QueryToken.AND,
-                    left_sibling: {
+                    leftChild: {
                         identifier: TestCompFour.identifier
                     },
-                    right_sibling: {
+                    rightChild: {
                         identifier: TestCompThree.identifier
                     }
                 },
@@ -257,17 +255,17 @@ describe('Systems', () => {
 
         const query: QueryNode = {
             token: QueryToken.OR,
-            left_sibling: {
+            leftChild: {
                 identifier: TestCompOne.identifier
             },
-            right_sibling: {
+            rightChild: {
                 token: QueryToken.SHARED,
-                left_sibling: {
+                leftChild: {
                     token: QueryToken.OR,
-                    left_sibling: {
+                    leftChild: {
                         identifier: TestCompFour.identifier
                     },
-                    right_sibling: {
+                    rightChild: {
                         identifier: TestCompThree.identifier
                     }
                 },

@@ -117,13 +117,13 @@ export class ECSManager {
     system: SystemFn<Event>,
     query: EscQuery)
     : number {
-    this.events.push({
-      query,
-      qResult: this.queryEntities(query),
-      system
-    });
+      this.events.push({
+        query,
+        qResult: this.queryEntities(query),
+        system
+      });
 
-    return this.events.length - 1;
+      return this.events.length - 1;
   }
 
   /**
@@ -136,11 +136,11 @@ export class ECSManager {
     system: SystemFn<number>,
     query: EscQuery)
     : void {
-    this.systems.push({
-      query,
-      qResult: this.queryEntities(query),
-      system
-    });
+      this.systems.push({
+        query,
+        qResult: this.queryEntities(query),
+        system
+      });
   }
 
   /**
@@ -246,8 +246,8 @@ export class ECSManager {
       }
 
       if (isQueryNode(query)) {
-        const qLResult = queryStep(query.left_sibling);
-        const qRResult = queryStep(query.right_sibling);
+        const qLResult = queryStep(query.leftChild);
+        const qRResult = queryStep(query.rightChild);
 
         switch (query.token) {
           case QueryToken.AND:
@@ -275,14 +275,14 @@ export class ECSManager {
         return query;
       }
 
-      const leftList = findShared(query.left_sibling);
-      const rightList = findShared(query.right_sibling);
+      const leftList = findShared(query.leftChild);
+      const rightList = findShared(query.rightChild);
 
       return leftList ?? rightList;
     };
 
     const sharedNode = findShared(query);
-    const sharedEntityEntries = sharedNode ? queryStep(sharedNode.left_sibling) : null;
+    const sharedEntityEntries = sharedNode ? queryStep(sharedNode.leftChild) : null;
 
     let sharedArgs: Component<object>[] | null = null;
     if (sharedEntityEntries) {
@@ -382,7 +382,6 @@ export class ECSManager {
     return args;
   }
 
-  // TODO: this can be optimized!
   /**
    * @ignore
    */
@@ -393,12 +392,12 @@ export class ECSManager {
       }
 
       if (isQueryNode(node)) {
-        const leftFind = isComponentInQuery(identifier, node.left_sibling);
+        const leftFind = isComponentInQuery(identifier, node.leftChild);
         if (leftFind) {
           return true;
         }
 
-        const rightFind = isComponentInQuery(identifier, node.right_sibling);
+        const rightFind = isComponentInQuery(identifier, node.rightChild);
         if (rightFind) {
           return true;
         }
