@@ -3,6 +3,7 @@ import {Entity, EntityEntry} from './entity.model';
 import {Component} from './component.model';
 import {EntityQueryResult, EscQuery, QueryNode, QueryToken, isQueryNode, QueryLeafNode, isQueryLeafNode} from './esc-query.model';
 import {ComponentIdentifier} from './component-identifier.model';
+import { DispatchSubject } from '../Observer/dispatch-subject';
 
 // TODO: currently does not support multiple components of same type on one entity
 //        - this silently fails when you add same type again, no error, memory leak created, queries broken
@@ -52,7 +53,7 @@ export class EntityBuilder {
    * @param component   a new component to be connected with given entity.
    */
   public addComponent<T extends ComponentIdentifier>(component: T): EntityBuilder {
-    return this.ecsManager.addComponent(this.id, component, this);
+    return this.ecsManager.addComponent(this.id, component, this) as EntityBuilder;
   }
 
   /**
@@ -61,7 +62,7 @@ export class EntityBuilder {
    * @param identifier   the type identifier for the component you want to remove
    */
   public removeComponent(identifier: string): EntityBuilder {
-    return this.ecsManager.removeComponent(this.id, identifier, this);
+    return this.ecsManager.removeComponent(this.id, identifier, this) as EntityBuilder;
   }
 }
 
@@ -104,8 +105,15 @@ export class ECSManager {
    */
   private prevRun: number;
 
+  /**
+   * @ignore
+   */
+  private afterUpdateLoop = new DispatchSubject<null>();
+
+  /**
+   * @ignore
+   */
   private isRunningSystems = false;
-  private toBeDeleted: DeleteEntry[] = [];
 
   /**
    * A system meant to be called manually by the callee
@@ -158,7 +166,14 @@ export class ECSManager {
    * @param component  a new component to be connected with given entity.
    * @param builder  Used by the EntityBuilder to cache itself, can be ignored usually
    */
-  public addComponent<T extends ComponentIdentifier>(entityId: number, component: T, builder?: EntityBuilder): EntityBuilder {
+  public addComponent<T extends ComponentIdentifier>(entityId: number, component: T, builder?: EntityBuilder): EntityBuilder | void  {
+    if (this.isRunningSystems) {
+      this.afterUpdateLoop.subscribe(() => {
+        this.addComponent(entityId, component);
+      });
+      return;
+    }
+
     const compName = component.identifier();
     if (!this.components.has(compName)) {
       this.components.set(compName, new Array<Component<T>>());
@@ -175,9 +190,12 @@ export class ECSManager {
    * @param identifier   the type identifier for the component you want to remove
    * @param builder  Used by the EntityBuilder to cache itself, can be ignored usually
    */
-  public removeComponent(entityId: number, identifier: string, builder?: EntityBuilder): EntityBuilder {
+  public removeComponent(entityId: number, identifier: string, builder?: EntityBuilder): EntityBuilder | void {
     if (this.isRunningSystems) {
-      this.toBeDeleted.push({entityId, identifier});
+      this.afterUpdateLoop.subscribe(() => {
+        this.removeComponent(entityId, identifier);
+      });
+      return;
     }
 
     const components = this.components.get(identifier).filter(c => c.entityId !== entityId);
@@ -221,7 +239,7 @@ export class ECSManager {
         }
       }
       return values;
-    }
+    };
 
     const orReducer = (previousValues: EntityEntry[], value: EntityEntry) => {
       if (!previousValues.find(n => n.id === value.id)) {
@@ -254,7 +272,7 @@ export class ECSManager {
         const thisResult: EntityEntry[] = components?.filter(c => !isNaN(c.entityId)).reduce(entityIdReducer, []) ?? [];
         return thisResult;
       }
-    }
+    };
 
     const findShared = (query: QueryNode | QueryLeafNode): QueryNode | null => {
       if (!query || isQueryLeafNode(query)) {
@@ -269,7 +287,7 @@ export class ECSManager {
       const rightList = findShared(query.right_sibling);
 
       return leftList ?? rightList;
-    }
+    };
 
     const sharedNode = findShared(query);
     const sharedEntityEntries = sharedNode ? queryStep(sharedNode.left_sibling) : null;
@@ -328,14 +346,12 @@ export class ECSManager {
       this.events[index].system(event, args, subscriber.qResult.sharedArgs);
     }
     this.isRunningSystems = false;
-    for (const next of this.toBeDeleted) {
-      this.removeComponent(next.entityId, next.identifier);
-    }
+    this.afterUpdateLoop.trigger();
   }
 
   /**
-   * Invokes all normal systems and supplies them with relevant based on previous query arguments
-   * and a common delta time
+   * Invokes all normal systems and supplies them with delta time and
+   * relevant arguments based on system query
    */
   public dispatch() {
     this.isRunningSystems = true;
@@ -354,9 +370,7 @@ export class ECSManager {
     }
 
     this.isRunningSystems = false;
-    for (const next of this.toBeDeleted) {
-      this.removeComponent(next.entityId, next.identifier);
-    }
+    this.afterUpdateLoop.trigger();
     this.prevRun = now;
   }
 
@@ -401,7 +415,7 @@ export class ECSManager {
       } else {
         return node.identifier === identifier;
       }
-    }
+    };
 
     const updatedSystem = <T>(system: System<T>) => {
       if (isComponentInQuery(changedIdentifier, system.query)) {

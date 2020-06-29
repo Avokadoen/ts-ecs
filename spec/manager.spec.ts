@@ -1,8 +1,8 @@
-import { ECSManager } from '../ecs/manager';
-import {ComponentIdentifier} from '../ecs/component-identifier.model';
-import { QueryToken, QueryNode, EntityQueryResult} from '../ecs/esc-query.model';
-import {Entity, EntityEntry} from '../ecs/entity.model';
-import {Component} from '../ecs/component.model';
+import { ECSManager } from '../src/ecs/manager';
+import {ComponentIdentifier} from '../src/ecs/component-identifier.model';
+import { QueryToken, QueryNode, EntityQueryResult} from '../src/ecs/esc-query.model';
+import {Entity, EntityEntry} from '../src/ecs/entity.model';
+import {Component} from '../src/ecs/component.model';
 
 class TestCompOne implements ComponentIdentifier {
     static readonly identifier = 'TestComp1';
@@ -139,7 +139,7 @@ describe('Query Entities', () => {
             left_sibling: {
                 identifier: TestCompTwo.identifier
             }
-        }
+        };
         
         const entities = manager.queryEntities(query).entities;
 
@@ -152,7 +152,7 @@ describe('Query Entities', () => {
             left_sibling: {
                 identifier: TestCompTwo.identifier
             }
-        }
+        };
         
         const entities = manager.queryEntities(query).entities;
 
@@ -165,7 +165,7 @@ describe('Query Entities', () => {
             left_sibling: {
                 identifier: TestCompOne.identifier
             }
-        }
+        };
         
         const entities = manager.queryEntities(query).entities;
 
@@ -182,7 +182,7 @@ describe('Query Entities', () => {
             right_sibling: {
                 identifier: TestCompThree.identifier
             }
-        }
+        };
 
         const entities = manager.queryEntities(query).entities;
 
@@ -199,7 +199,7 @@ describe('Query Entities', () => {
             right_sibling: {
                 identifier: TestCompOne.identifier
             }
-        }
+        };
 
         const entities = manager.queryEntities(query).entities;
 
@@ -216,7 +216,7 @@ describe('Query Entities', () => {
             right_sibling: {
                 identifier: TestCompTwo.identifier
             }
-        }
+        };
 
         const entities = manager.queryEntities(query).entities;
 
@@ -233,7 +233,7 @@ describe('Query Entities', () => {
             right_sibling: {
                 identifier: TestCompOne.identifier
             }
-        }
+        };
 
         const entities = manager.queryEntities(query).entities;
 
@@ -259,7 +259,7 @@ describe('Query Entities', () => {
                     }
                 },
             }
-        }
+        };
 
         const result = manager.queryEntities(query);
 
@@ -285,7 +285,7 @@ describe('Query Entities', () => {
                     }
                 },
             }
-        }
+        };
 
 
         const result = manager.queryEntities(query);
@@ -313,7 +313,7 @@ describe('Query Entities', () => {
                 right_sibling: {
                     identifier: TestCompFour.identifier
                 }
-            }
+            };
 
             const result = _manager.queryEntities(query).entities;
 
@@ -329,7 +329,7 @@ describe('Query Entities', () => {
                 right_sibling: {
                     identifier: TestCompThree.identifier
                 }
-            }
+            };
 
             const result = _manager.queryEntities(query).entities;
 
@@ -351,7 +351,7 @@ describe('Query runtime components', () => {
             left_sibling: {
                 identifier: TestCompTwo.identifier
             }
-        }
+        };
 
         const expected: EntityQueryResult = {
             entities: [
@@ -376,7 +376,7 @@ describe('Query runtime components', () => {
             right_sibling: {
                 identifier: TestCompThree.identifier
             }
-        }
+        };
 
         const expected: EntityQueryResult = {
             entities: [
@@ -413,7 +413,7 @@ describe('Systems', () => {
         left_sibling: {
             identifier: TestCompFour.identifier
         }
-    }
+    };
 
     it('Should mutate component state on dispatch', () => {
         const manager = new ECSManager();
@@ -446,6 +446,82 @@ describe('Systems', () => {
         manager.onEvent(index, null);
 
         expect(compFourRef.someState).toBe(4);
+    });
+
+    it('Should delete self only after dispatch', () => {
+        const manager = new ECSManager();
+
+        const compFourRef = new TestCompFour(0);
+        manager.createEntity().addComponent(compFourRef);
+
+        manager.createEntity().addComponent(new TestCompOne());
+        manager.createEntity().addComponent(new TestCompOne());
+        manager.createEntity().addComponent(new TestCompOne());
+
+        const deleteQuery = {
+            token: QueryToken.OR,
+            left_sibling: {
+                identifier: TestCompOne.identifier
+            },
+            right_sibling: {
+                token: QueryToken.SHARED,
+                left_sibling: {
+                    identifier: TestCompFour.identifier
+                }
+            }
+        };
+
+        const deleteSelfSystem = (_: number, args: Component<TestCompOne>[], sharedArgs: Component<TestCompFour>[]) => {
+            const four = sharedArgs[0].data;
+
+            four.someState += 1;
+
+            manager.removeComponent(args[0].entityId, args[0].data.identifier());
+        };
+
+        manager.registerSystem(deleteSelfSystem, deleteQuery);
+
+        manager.dispatch();
+        manager.dispatch();
+
+        expect(compFourRef.someState).toBe(3);
+    });
+
+    it('Should add new component only after dispatch', () => {
+        const manager = new ECSManager();
+
+        const compFourRef = new TestCompFour(0);
+        manager.createEntity().addComponent(compFourRef);
+
+        manager.createEntity().addComponent(new TestCompOne());
+
+        const addQuery = {
+            token: QueryToken.OR,
+            left_sibling: {
+                identifier: TestCompOne.identifier
+            },
+            right_sibling: {
+                token: QueryToken.SHARED,
+                left_sibling: {
+                    identifier: TestCompFour.identifier
+                }
+            }
+        };
+
+        const addNewSystem = (_: number, args: Component<TestCompOne>[], sharedArgs: Component<TestCompFour>[]) => {
+            const four = sharedArgs[0].data;
+
+            four.someState += 1;
+
+            manager.createEntity().addComponent(new TestCompOne());
+        };
+
+        manager.registerSystem(addNewSystem, addQuery);
+
+        manager.dispatch();
+        manager.dispatch();
+
+        expect(compFourRef.someState).toBe(3);
     });
 
     it('Should update query result on remove', () => {
@@ -522,7 +598,7 @@ describe('Systems', () => {
                     }
                 },
             }
-        }
+        };
 
         manager.registerSystem(sharedStateSystem, query);
 
@@ -559,7 +635,7 @@ describe('Systems', () => {
                     }
                 },
             }
-        }
+        };
 
         const index = manager.registerEvent(sharedStateSystem, query);
 
@@ -595,7 +671,7 @@ describe('Systems', () => {
                     }
                 },
             }
-        }
+        };
 
         const sharedStateOrQuerySystem = <T>(
             _: T,

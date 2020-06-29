@@ -1,0 +1,1 @@
+export type Observer<T> = (observed: T) => void;

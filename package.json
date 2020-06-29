@@ -7,13 +7,17 @@
   "scripts": {
     "doc": "typedoc",
     "clean": "rm -rf dist",
-    "build": "tsc",
-    "test": "tsc && jasmine-ts \"spec/**/*.spec.ts\""
+    "lint": "tslint --project tsconfig.json",
+    "build": "npm run lint && tsc",
+    "test": "npm run build && jasmine-ts \"spec/**/*.spec.ts\""
   },
   "keywords": [
     "ECS",
     "Typescript",
-    "Naive"
+    "Naive implementation",
+    "Videogame",
+    "Game",
+    "Framework"
   ],
   "author": "Avokadoen",
   "license": "MIT",
