@@ -19,7 +19,7 @@
         "esModuleInterop": true,
         "jsx": "react"
     },
-    "include": ["./src/**/*", "./spec/**/*"],
+    "include": ["./src/**/*", "index.ts", "./spec/**/*"],
     "exclude": ["dist"],
     "typedocOptions": {
         "inputFiles": ["./src", "index.ts"],
