@@ -3,7 +3,7 @@ import {Entity, EntityEntry} from './entity.model';
 import {Component} from './component.model';
 import {EntityQueryResult, EscQuery, QueryNode, QueryToken, isQueryNode, QueryLeafNode, isQueryLeafNode} from './esc-query.model';
 import {ComponentIdentifier} from './component-identifier.model';
-import { DispatchSubject } from '../Observer/dispatch-subject';
+import { DispatchSubject } from '../observer/dispatch-subject';
 
 // TODO: currently does not support multiple components of same type on one entity
 //        - this silently fails when you add same type again, no error, memory leak created, queries broken
@@ -108,7 +108,7 @@ export class ECSManager {
   /**
    * @ignore
    */
-  private afterUpdateLoop = new DispatchSubject<null>();
+  private afterUpdateLoop: DispatchSubject<null> = new DispatchSubject<null>();
 
   /**
    * @ignore
