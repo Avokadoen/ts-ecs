@@ -9,7 +9,7 @@ import { DispatchSubject } from '../observer/dispatch-subject';
 //        - this silently fails when you add same type again, no error, memory leak created, queries broken
 // TODO: System args should be cached, and not created each frame
 // TODO: Event handling requires callee to keep relevant index to event. This should be encapsulated to reduce errors
-// TODO: entity id should be defined by callee or generated if not definer. Should fail somehow if taken
+// TODO: entity id should be defined by callee or generated if not defined. Should fail somehow if taken
 // TODO: documentation using http://typedoc.org/
 // TODO: queryAny: return one entity with components
 // TODO: Async functions/manager
@@ -17,9 +17,6 @@ import { DispatchSubject } from '../observer/dispatch-subject';
 // TODO: error object on invalid queries etc
 // TODO: interpret query string to EscQuery
 // TODO: delete entity function (make sure to remove all components also)
-// TODO: instead of return bool on system. We should wait with removing components until we are done
-//       with dispatch!
-// TODO: Bug with shared followed by OR
 // TODO: move TODO's to issues on github
 // TODO: make specification for query syntax tree
 //      - also for callee syntax
@@ -64,11 +61,6 @@ export class EntityBuilder {
   public removeComponent(identifier: string): EntityBuilder {
     return this.ecsManager.removeComponent(this.id, identifier, this) as EntityBuilder;
   }
-}
-
-interface DeleteEntry {
-  entityId: number;
-  identifier: string;
 }
 
 /**

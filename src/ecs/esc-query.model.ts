@@ -9,7 +9,6 @@ export interface EntityQueryResult {
   entities: EntityEntry[];
 }
 
-// TODO: EscQuery should be a tree, not an array
 /**
  * A complete query that can be used by {@link ECSManager}
  */
