@@ -1,12 +1,11 @@
-import { TestCompFour, TestCompOne, TestCompThree } from "./utility";
+import { TestCompFour, TestCompOne, TestCompThree, TestCompTwo } from "./utility";
 import { Component } from "../../src/ecs/component.model";
 import { QueryToken, QueryNode } from "../../src/ecs/esc-query.model";
 import { ECSManager } from "../../src/ecs/manager";
 
 describe('Systems', () => {
-    const testSystem = <T>(_: T, args: Component<TestCompFour>[]) => {
-        const testCompFour = args[0].data;
-        testCompFour.someState += 1;
+    const testSystem = <T>(_: T, testCompFour: Component<TestCompFour>) => {
+        testCompFour.data.someState += 1;
     };
 
     const query: QueryNode = {
@@ -71,12 +70,12 @@ describe('Systems', () => {
             }
         };
 
-        const deleteSelfSystem = (_: number, args: Component<TestCompOne>[], sharedArgs: Component<TestCompFour>[]) => {
-            const four = sharedArgs[0].data;
+        const deleteSelfSystem = (_: number, testCompOne: Component<TestCompOne>, testCompFour: Component<TestCompFour>) => {
+            const four = testCompFour.data;
 
             four.someState += 1;
 
-            manager.removeComponent(args[0].entityId, args[0].data.identifier());
+            manager.removeComponent(testCompOne.entityId, testCompOne.data.identifier());
         };
 
         manager.registerSystem(deleteSelfSystem, deleteQuery);
@@ -108,8 +107,8 @@ describe('Systems', () => {
             }
         };
 
-        const addNewSystem = (_: number, args: Component<TestCompOne>[], sharedArgs: Component<TestCompFour>[]) => {
-            const four = sharedArgs[0].data;
+        const addNewSystem = (_: number, testCompOne: Component<TestCompOne>, testCompFour: Component<TestCompFour>) => {
+            const four = testCompFour.data;
 
             four.someState += 1;
 
@@ -160,11 +159,8 @@ describe('Systems', () => {
         expect(compFourRef.someState).toBe(2);
     });
 
-    const sharedStateSystem = <T>(
-        _: T,
-        args: Component<TestCompOne>[],
-        sharedArgs: Component<TestCompFour>[]) => {
-        const shared = sharedArgs[0].data;
+    const sharedStateSystem = <T>(_: T, testCompOne: Component<TestCompOne>, testCompFour: Component<TestCompFour>) => {
+        const shared = testCompFour.data;
 
         shared.someState += 1;
     };
@@ -248,6 +244,7 @@ describe('Systems', () => {
 
         const compFourRef = new TestCompFour(0);
         manager.createEntity().addComponent(compFourRef);
+        manager.createEntity().addComponent(compFourRef);
         manager.createEntity().addComponent(new TestCompThree());
 
         manager.createEntity().addComponent(new TestCompOne());
@@ -273,18 +270,20 @@ describe('Systems', () => {
         };
 
         const sharedStateOrQuerySystem = <T>(
-            _: T,
-            args: Component<TestCompOne>[],
-            sharedArgs: Component<TestCompFour>[]) => {
-            const shared = sharedArgs[0].data;
+            _: T, 
+            testCompOne: Component<TestCompOne>,
+            testCompFour: Component<TestCompFour>,
+            testCompThree: Component<TestCompThree>
+            ) => {
+                const shared = testCompFour.data;
 
-            shared.someState = sharedArgs.length;
+                shared.someState = (testCompThree) ? 1 : 0;
         };
 
         const index = manager.registerEvent(sharedStateOrQuerySystem, query);
 
         manager.onEvent(index, null);
 
-        expect(compFourRef.someState).toBe(2, 'Shared state was not mutated');
+        expect(compFourRef.someState).toBe(1, 'Shared state was not mutated');
     });
 });

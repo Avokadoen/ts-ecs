@@ -333,9 +333,10 @@ export class ECSManager {
     this.isRunningSystems = true;
     const subscriber = this.events[index];
 
+    const eventArr: Array<Event|Component<object>> = [event];
     for (const entity of subscriber.qResult.entities) {
-      const args = this.createArgs(entity);
-      this.events[index].system(event, args, subscriber.qResult.sharedArgs);
+      const args = eventArr.concat(this.createArgs(entity));
+      this.events[index].system.apply(null, args.concat(subscriber.qResult.sharedArgs));
     }
     this.isRunningSystems = false;
     this.afterUpdateLoop.trigger();
@@ -352,12 +353,11 @@ export class ECSManager {
 
     const now = Date.now();
 
-    const deltaTime = (now - this.prevRun) / 1000;
-
+    const deltaTime: Array<number|Component<object>> = [(now - this.prevRun) / 1000];
     for (const system of this.systems) {
       for (const entity of system.qResult.entities) {
-        let args = this.createArgs(entity);
-        system.system(deltaTime, args, system.qResult.sharedArgs);
+        let args = deltaTime.concat(this.createArgs(entity));
+        system.system.apply(null, args.concat(system.qResult.sharedArgs));
       }
     }
 
