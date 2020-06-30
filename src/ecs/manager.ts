@@ -5,22 +5,6 @@ import {EntityQueryResult, EscQuery, QueryNode, QueryToken, isQueryNode, QueryLe
 import {ComponentIdentifier} from './component-identifier.model';
 import { DispatchSubject } from '../observer/dispatch-subject';
 
-// TODO: currently does not support multiple components of same type on one entity
-//        - this silently fails when you add same type again, no error, memory leak created, queries broken
-// TODO: System args should be cached, and not created each frame
-// TODO: Event handling requires callee to keep relevant index to event. This should be encapsulated to reduce errors
-// TODO: entity id should be defined by callee or generated if not defined. Should fail somehow if taken
-// TODO: documentation using http://typedoc.org/
-// TODO: queryAny: return one entity with components
-// TODO: Async functions/manager
-// TODO: register event could use observables to simplify api
-// TODO: error object on invalid queries etc
-// TODO: interpret query string to EscQuery
-// TODO: delete entity function (make sure to remove all components also)
-// TODO: move TODO's to issues on github
-// TODO: make specification for query syntax tree
-//      - also for callee syntax
-
 /**
  * Builder for entities. Enables end user to chain operations.
  * Example:
