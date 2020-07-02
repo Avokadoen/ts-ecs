@@ -5,11 +5,28 @@ enum StateChange {
     LeafNode
 }
 
+export function createQueryFromIdentifierList(identifiers: string[]): QueryNode {
+    const qBuilder = new QueryBuilder();
+    for (const [i, identifier] of identifiers.entries()) {
+        qBuilder.identifier(identifier);
+        const onLast = (i === identifiers.length - 1);
+        if (!onLast) {
+            qBuilder.token(QueryToken.AND);
+        }
+    }
+
+    return qBuilder.build();
+}
+
 export class QueryBuilder {
     private root: QueryNode;
     private currentNode: QueryNode; 
 
     private lastChange: StateChange;
+
+    get workingNode(): QueryNode {
+        return this.currentNode;
+    }
 
     constructor(state?: QueryNode) {
         if (state) {
