@@ -21,7 +21,7 @@ describe('Systems', () => {
         const compFourRef = new TestCompFour(0);
         manager.createEntity().addComponent(compFourRef);
 
-        manager.registerSystem(testSystem, query);
+        manager.registerSystemWithEscQuery(testSystem, query);
 
         manager.dispatch();
         manager.dispatch();
@@ -37,7 +37,7 @@ describe('Systems', () => {
         const compFourRef = new TestCompFour(0);
         manager.createEntity().addComponent(compFourRef);
 
-        const index = manager.registerEvent(testSystem, query);
+        const index = manager.registerEventWithEscQuery(testSystem, query);
 
         manager.onEvent(index, null);
         manager.onEvent(index, null);
@@ -78,7 +78,7 @@ describe('Systems', () => {
             manager.removeComponent(testCompOne.entityId, testCompOne.data.identifier());
         };
 
-        manager.registerSystem(deleteSelfSystem, deleteQuery);
+        manager.registerSystemWithEscQuery(deleteSelfSystem, deleteQuery);
 
         manager.dispatch();
         manager.dispatch();
@@ -115,7 +115,7 @@ describe('Systems', () => {
             manager.createEntity().addComponent(new TestCompOne());
         };
 
-        manager.registerSystem(addNewSystem, addQuery);
+        manager.registerSystemWithEscQuery(addNewSystem, addQuery);
 
         manager.dispatch();
         manager.dispatch();
@@ -132,7 +132,7 @@ describe('Systems', () => {
         const otherCompFourRef = new TestCompFour(0);
         manager.createEntity().addComponent(otherCompFourRef);
 
-        manager.registerSystem(testSystem, query);
+        manager.registerSystemWithEscQuery(testSystem, query);
 
         entityBuilder.removeComponent(TestCompFour.identifier);
 
@@ -149,7 +149,7 @@ describe('Systems', () => {
         const compFourRef = new TestCompFour(0);
         const entityBuilder = manager.createEntity();
 
-        manager.registerSystem(testSystem, query);
+        manager.registerSystemWithEscQuery(testSystem, query);
 
         entityBuilder.addComponent(compFourRef);
 
@@ -195,7 +195,7 @@ describe('Systems', () => {
             }
         };
 
-        manager.registerSystem(sharedStateSystem, query);
+        manager.registerSystemWithEscQuery(sharedStateSystem, query);
 
         manager.dispatch();
 
@@ -232,7 +232,7 @@ describe('Systems', () => {
             }
         };
 
-        const index = manager.registerEvent(sharedStateSystem, query);
+        const index = manager.registerEventWithEscQuery(sharedStateSystem, query);
 
         manager.onEvent(index, null);
 
@@ -280,7 +280,7 @@ describe('Systems', () => {
                 shared.someState = (testCompThree) ? 1 : 0;
         };
 
-        const index = manager.registerEvent(sharedStateOrQuerySystem, query);
+        const index = manager.registerEventWithEscQuery(sharedStateOrQuerySystem, query);
 
         manager.onEvent(index, null);
 

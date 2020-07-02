@@ -4,6 +4,7 @@ import {Component} from './component.model';
 import {EntityQueryResult, EscQuery, QueryNode, QueryToken, isQueryNode, QueryLeafNode, isQueryLeafNode} from './esc-query.model';
 import {ComponentIdentifier} from './component-identifier.model';
 import { DispatchSubject } from '../observer/dispatch-subject';
+import { createQueryFromIdentifierList } from './query-builder';
 
 /**
  * Builder for entities. Enables end user to chain operations.
@@ -92,12 +93,12 @@ export class ECSManager {
   private isRunningSystems = false;
 
   /**
-   * A system meant to be called manually by the callee
+   * Register a system meant to be called manually by the callee
    *
    * @param system  A function that will read/write to components
    * @param query  The query used to fetch system parameters
    */
-  public registerEvent(
+  public registerEventWithEscQuery(
     system: SystemFn<Event>,
     query: EscQuery)
     : number {
@@ -110,21 +111,42 @@ export class ECSManager {
       return this.events.length - 1;
   }
 
+    /**
+   * Register a system meant to be called manually by the callee
+   *
+   * @param system  A function that will read/write to components
+   * @param identifiers  A list of type identifiers
+   */
+  public registerEvent(system: SystemFn<Event>, identifiers: string[]): void {
+    const query = createQueryFromIdentifierList(identifiers);
+    this.registerEventWithEscQuery(system, query);
+  }
+
+
   /**
-   * A system meant to be called each frame by the manager
+   * Register a system meant to be called each frame by the manager
    *
    * @param system  A function that will read/write to components
    * @param query  The query used to fetch system parameters
    */
-  public registerSystem(
-    system: SystemFn<number>,
-    query: EscQuery)
-    : void {
-      this.systems.push({
-        query,
-        qResult: this.queryEntities(query),
-        system
-      });
+  public registerSystemWithEscQuery(system: SystemFn<number>,  query: EscQuery): void {
+    this.systems.push({
+      query,
+      qResult: this.queryEntities(query),
+      system
+    });
+  }
+
+
+  /**
+   * Register a system meant to be called each frame by the manager
+   *
+   * @param system  A function that will read/write to components
+   * @param identifiers  A list of type identifiers
+   */
+  public registerSystem(system: SystemFn<number>, identifiers: string[]): void {
+    const query = createQueryFromIdentifierList(identifiers);
+    this.registerSystemWithEscQuery(system, query);
   }
 
   /**

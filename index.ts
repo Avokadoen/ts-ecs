@@ -7,5 +7,3 @@ export * from './src/ecs/system.model';
 export * from './src/observer/dispatch-subject'; 
 
 export * from './src/ecs/manager';
-
-
