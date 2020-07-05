@@ -17,10 +17,20 @@
         "declarationDir": "dist",
         "declarationMap": true,
         "esModuleInterop": true,
-        "jsx": "react"
+        "jsx": "react",
+        "plugins": [
+            { "transform": "./src/transformers/register-system.transformer.ts" },
+        ]
     },
-    "include": ["./src/**/*", "index.ts", "./spec/**/*"],
-    "exclude": ["dist"],
+    "include": [
+        "./src/**/*", 
+        "index.ts", 
+        "./spec/**/*"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist"
+    ],
     "typedocOptions": {
         "inputFiles": ["./src", "index.ts"],
         "mode": "modules",
