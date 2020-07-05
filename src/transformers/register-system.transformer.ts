@@ -115,11 +115,21 @@ function extractParametersTypeAsString(parameters: NodeArray<ParameterDeclaratio
     let typeArray: string[] = [];
     for (const p of parameters) {
         const t = p.type;
+
         if (t && isTypeReferenceNode(t)) {
             if (isIdentifier(t.typeName)) {
-                typeArray.push(t.typeName.escapedText as string);
+                let typeString = t.typeName.escapedText as string;
+                if (t.typeArguments) {
+                    typeString += '<'.repeat(t.typeArguments.length);
+                    for (const tArg of t.typeArguments) {
+                        typeString = typeString.concat(tArg.getText() + '>');
+                    }
+                }
+
+                typeArray.push(typeString);
             }
         }
+
     }
     return typeArray;
 }
