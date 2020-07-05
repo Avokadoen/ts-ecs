@@ -157,7 +157,6 @@ export class ECSManager {
     return new EntityBuilder(this.entityId - 1, this);
   }
 
-  // TODO: update relevant systems query results (see top todo)
   /**
    * @typeParam T  any class that implements ComponentIdentifier
    * @param entityId  id of entity that is supposed to be updated
@@ -165,14 +164,18 @@ export class ECSManager {
    * @param builder  Used by the EntityBuilder to cache itself, can be ignored usually
    */
   public addComponent<T extends ComponentIdentifier>(entityId: number, component: T, builder?: EntityBuilder): EntityBuilder | void  {
+    const compName = component.identifier();
+    if (this.components.get(compName)?.find(c => c.entityId === entityId)) {
+      return builder ?? new EntityBuilder(entityId, this); // TODO: errorhandling
+    }
+
     if (this.isRunningSystems) {
       this.afterUpdateLoop.subscribe(() => {
         this.addComponent(entityId, component);
       });
-      return;
+      return builder ?? new EntityBuilder(entityId, this);
     }
 
-    const compName = component.identifier();
     if (!this.components.has(compName)) {
       this.components.set(compName, new Array<Component<T>>());
     }
