@@ -1,5 +1,5 @@
 import {QueryBuilder, createQueryFromIdentifierList} from '../../src/ecs/query-builder';
-import { QueryToken } from '../../src/ecs/esc-query.model';
+import { QueryToken, QueryNode } from '../../src/ecs/esc-query.model';
 
 describe('Query builder creates valid query tree', () => {
     const identifier1 = 'identifier1';
@@ -137,6 +137,39 @@ describe('Query builder creates valid query tree', () => {
                         rightChild: {
                             identifier: identifier4
                         }
+                    }
+                }
+            }
+        );
+    });
+
+    it('Should build a query with an identifier list of 4 and shared', () => {
+        const list = [identifier1, identifier2, identifier3 + '[]', identifier4 + '[]'];
+        const query = createQueryFromIdentifierList(list);
+
+        expect(query).toEqual(
+            {
+                token: QueryToken.AND,
+                leftChild: {
+                    identifier: identifier1
+                },
+                rightChild:    {
+                    token: QueryToken.OR,
+                    leftChild: {
+                        identifier: identifier2
+                    },
+                    rightChild: 
+                    {
+                        token: QueryToken.SHARED,
+                        leftChild: {
+                            token: QueryToken.AND,
+                            leftChild: {
+                                identifier: identifier3
+                            },
+                            rightChild: {
+                                identifier: identifier4
+                            }
+                        },
                     }
                 }
             }

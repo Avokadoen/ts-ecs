@@ -1,27 +1,45 @@
-import { QueryNode, QueryLeafNode, QueryToken, queryTokenFromString } from "./esc-query.model";
+import { QueryNode, QueryToken } from "./esc-query.model";
 
 enum StateChange {
     Node,
     LeafNode
 }
 
+// TODO: this seems like it should be a state machine
+// TODO: we should just write a text parser instead of using the builder
+// Currently a terrible mess of if's. Should refactor asap
 export function createQueryFromIdentifierList(identifiers: string[]): QueryNode {
-    const qBuilder = new QueryBuilder();
-    for (const [i, identifier] of identifiers.entries()) {
-        qBuilder.identifier(identifier);
-        const onLast = (i === identifiers.length - 1);
-        if (!onLast) {
-            qBuilder.token(QueryToken.AND);
-        }
-    }
+    let sharedSet = false;
+    const createTree = (identifiers: string []) => {
+        const qBuilder = new QueryBuilder();
+        for (let i = 0; i < identifiers.length; i++) {
 
-    return qBuilder.build();
+            const identifierSplit = identifiers[i].split('[');
+            qBuilder.identifier(identifierSplit[0]);
+            const onLast = (i === identifiers.length - 1);
+            const nextIsShared = !sharedSet && !onLast && identifiers[i + 1].split('[').length > 1;
+
+            if (!onLast && !nextIsShared) {
+                qBuilder.token(QueryToken.AND);
+            } else if (nextIsShared) {
+                sharedSet = true;
+                qBuilder.token(QueryToken.OR);
+                qBuilder.token(QueryToken.SHARED);
+                qBuilder.append(createTree(identifiers.slice(i + 1, identifiers.length)));
+                break;
+            }
+
+        }
+
+        return qBuilder.build();
+    };
+
+    return createTree(identifiers);
 }
 
 export class QueryBuilder {
     private root: QueryNode;
     private currentNode: QueryNode; 
-
     private lastChange: StateChange;
 
     get workingNode(): QueryNode {
@@ -91,6 +109,24 @@ export class QueryBuilder {
         }
 
         return this;
+    }
+
+    public append(tree: QueryNode) {
+        if (this.lastChange === StateChange.LeafNode) {
+            return;
+        }
+
+        if (!this.currentNode.leftChild) {
+            this.currentNode.leftChild = tree;
+        } else if (!this.currentNode.rightChild) {
+            this.currentNode.rightChild = tree;
+        } else {
+            const rc = this.currentNode.rightChild;
+            this.currentNode.rightChild = {
+                token: QueryToken.AND,
+                leftChild: tree
+            };
+        }
     }
 
     public build(): QueryNode {
