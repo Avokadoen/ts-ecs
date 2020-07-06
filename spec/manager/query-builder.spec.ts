@@ -1,5 +1,5 @@
 import {QueryBuilder, createQueryFromIdentifierList} from '../../src/ecs/query-builder';
-import { QueryToken, QueryNode } from '../../src/ecs/esc-query.model';
+import { QueryToken } from '../../src/ecs/esc-query.model';
 
 describe('Query builder creates valid query tree', () => {
     const identifier1 = 'identifier1';

@@ -1,6 +1,6 @@
 import { ECSManager } from "../../src/ecs/manager";
 import { EntityEntry, Entity } from "../../src/ecs/entity.model";
-import { sortFn, createSimpleQueryScenario, TestCompTwo, TestCompOne, TestCompThree, TestCompFour } from "./utility";
+import { sortFn, createSimpleQueryScenario, TestCompTwo, TestCompOne, TestCompThree, TestCompFour } from "../utility";
 import { Component } from "../../src/ecs/component.model";
 import { QueryNode, QueryToken } from "../../src/ecs/esc-query.model";
 

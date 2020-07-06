@@ -1,6 +1,6 @@
 import { ECSManager } from "../../src/ecs/manager";
 import { registerSystem, System } from "../../index";
-import { TestCompTwo, TestCompOne } from "./utility";
+import { TestCompTwo, TestCompOne } from "../utility";
 import { Component } from "../../src/ecs/component.model";
 import { QueryToken } from "../../src/ecs/esc-query.model";
 import { ComponentIdentifier } from "../../src/ecs/component-identifier.model";

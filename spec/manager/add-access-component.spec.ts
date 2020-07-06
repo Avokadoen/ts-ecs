@@ -1,5 +1,5 @@
 import { ECSManager } from "../../src/ecs/manager";
-import { TestCompOne, TestCompFour } from "./utility";
+import { TestCompOne, TestCompFour } from "../utility";
 
 describe('AddComponent', () => {
     it('Should succeed on ComponentIdentifier', () => {

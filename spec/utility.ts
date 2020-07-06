@@ -1,6 +1,6 @@
-import { ComponentIdentifier } from "../../src/ecs/component-identifier.model";
-import { ECSManager } from "../../src/ecs/manager";
-import { Entity } from "../../src/ecs/entity.model";
+import { ComponentIdentifier } from "../src/ecs/component-identifier.model";
+import { ECSManager } from "../src/ecs/manager";
+import { Entity } from "../src/ecs/entity.model";
 
 export class TestCompOne implements ComponentIdentifier {
     static readonly identifier = 'TestComp1';

@@ -1,6 +1,6 @@
 import { ECSManager } from "../../src/ecs/manager";
 import { QueryNode, QueryToken, EntityQueryResult } from "../../src/ecs/esc-query.model";
-import { TestCompTwo, TestCompOne, TestCompThree, createSimpleQueryScenario } from "./utility";
+import { TestCompTwo, TestCompOne, TestCompThree, createSimpleQueryScenario } from "../utility";
 
 // TODO: test shared args
 describe('Query runtime components', () => {
