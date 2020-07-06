@@ -60,4 +60,22 @@ describe('Query runtime components', () => {
 
         expect(manager.queryEntities(query)).toEqual(expected);
     });
+
+    it('Should serve shared args as an array', () => {
+        const query: QueryNode = {
+            token: QueryToken.SHARED,
+            leftChild: {
+                token: QueryToken.OR,
+                leftChild: {
+                    identifier: TestCompOne.identifier
+                }
+            }
+        };
+
+        const expected = [
+            [0, 3, 5]
+        ];
+
+        expect(manager.queryEntities(query).sharedArgs.map(a => a.map(c => c.entityId))).toEqual(expected);
+    });
 });

@@ -290,14 +290,33 @@ export class ECSManager {
       return leftList ?? rightList;
     };
 
-    const sharedNode = findShared(query);
-    const sharedEntityEntries = sharedNode ? queryStep(sharedNode.leftChild) : null;
+    const extractLeafNodes = (query: QueryNode | QueryLeafNode | undefined): QueryLeafNode[] | undefined => {
+      if (!query) {
+        return;
+      }
 
-    let sharedArgs: Component<object>[] | null = null;
+      if (isQueryNode(query)) {
+        const leftLeafs = extractLeafNodes(query.leftChild);
+        const rightLeafs = extractLeafNodes(query.rightChild);
+        return (leftLeafs ?? []).concat(rightLeafs ?? []); 
+      }
+      
+      return [query];
+    };
+
+    const sharedNode = findShared(query);
+    const sharedLeafs = extractLeafNodes(sharedNode);
+
+    const sharedEntityEntries = sharedLeafs ? sharedLeafs.map(l => queryStep(l)) : null;
+    let sharedArgs: Component<object>[][] | null = null;
     if (sharedEntityEntries) {
       sharedArgs = [];
       for (const entry of sharedEntityEntries) {
-        sharedArgs = sharedArgs.concat(this.createArgs(entry));
+        let compArgs: Component<object>[] = [];
+        for (const entity of entry) {
+          compArgs = compArgs.concat(this.createArgs(entity));
+        }
+        sharedArgs.push(compArgs);
       }
     }
 
@@ -342,7 +361,7 @@ export class ECSManager {
     this.isRunningSystems = true;
     const subscriber = this.events[index];
 
-    const eventArr: Array<Event|Component<object>> = [event];
+    const eventArr: Array<Event|Component<object>|Component<object>[]> = [event];
     for (const entity of subscriber.qResult.entities) {
       const args = eventArr.concat(this.createArgs(entity));
       this.events[index].system.apply(null, args.concat(subscriber.qResult.sharedArgs));
@@ -362,7 +381,7 @@ export class ECSManager {
 
     const now = Date.now();
 
-    const deltaTime: Array<number|Component<object>> = [(now - this.prevRun) / 1000];
+    const deltaTime: Array<number|Component<object>|Component<object>[]> = [(now - this.prevRun) / 1000];
     for (const system of this.systems) {
       for (const entity of system.qResult.entities) {
         let args = deltaTime.concat(this.createArgs(entity));

@@ -70,8 +70,8 @@ describe('Systems', () => {
             }
         };
 
-        const deleteSelfSystem = (_: number, testCompOne: Component<TestCompOne>, testCompFour: Component<TestCompFour>) => {
-            const four = testCompFour.data;
+        const deleteSelfSystem = (_: number, testCompOne: Component<TestCompOne>, testCompFour: Component<TestCompFour>[]) => {
+            const four = testCompFour[0].data;
 
             four.someState += 1;
 
@@ -107,8 +107,8 @@ describe('Systems', () => {
             }
         };
 
-        const addNewSystem = (_: number, testCompOne: Component<TestCompOne>, testCompFour: Component<TestCompFour>) => {
-            const four = testCompFour.data;
+        const addNewSystem = (_: number, testCompOne: Component<TestCompOne>, testCompFour: Component<TestCompFour>[]) => {
+            const four = testCompFour[0].data;
 
             four.someState += 1;
 
@@ -159,8 +159,9 @@ describe('Systems', () => {
         expect(compFourRef.someState).toBe(2);
     });
 
-    const sharedStateSystem = <T>(_: T, testCompOne: Component<TestCompOne>, testCompFour: Component<TestCompFour>) => {
-        const shared = testCompFour.data;
+    const sharedStateSystem = <T>(
+        _: T, testCompOne: Component<TestCompOne>, testCompFour: Component<TestCompFour>[]) => {
+        const shared = testCompFour[0].data;
 
         shared.someState += 1;
     };
@@ -272,10 +273,10 @@ describe('Systems', () => {
         const sharedStateOrQuerySystem = <T>(
             _: T, 
             testCompOne: Component<TestCompOne>,
-            testCompFour: Component<TestCompFour>,
-            testCompThree: Component<TestCompThree>
+            testCompFour: Component<TestCompFour>[],
+            testCompThree: Component<TestCompThree>[]
             ) => {
-                const shared = testCompFour.data;
+                const shared = testCompFour[0].data;
 
                 shared.someState = (testCompThree) ? 1 : 0;
         };
