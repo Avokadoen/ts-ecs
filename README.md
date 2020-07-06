@@ -4,6 +4,50 @@ It is not meant to be used in any production game.
 
 npm package can be found [here](https://www.npmjs.com/package/naive-ts-ecs)
 
+# Using this project
+This project utilizes [typescript transformers](https://github.com/madou/typescript-transformer-handbook). In order for it to work in your project you will have to enable the transformers. How you do this depends on the project facilities:
+
+## In Webpack
+```js
+const registerSystemTransformer = require('niave-ts-ecs/transformer/register-system.transformer.ts').default; // <--
+
+module.exports = ['ts-loader'].map(loader => ({
+   // ... omitted
+    module: {
+        rules: [
+            {
+                // ... omitted
+                options: {
+                    // make sure not to set `transpileOnly: true` here, otherwise it will not work
+                    getCustomTransformers: program => ({
+                        before: [
+                            registerSystemTransformer(program)
+                        ]
+                    })
+                }
+            },
+        ],
+    },
+}));
+```
+read more about webpack [here](https://webpack.js.org/guides/getting-started/)
+
+## in ttypescript
+Remeber to build using `ttsc` not `tsc`
+```json
+{
+    ...
+    "compilerOptions": {
+        ...
+        "plugins": [
+            { "transform": "./src/transformers/register-system.transformer.ts" },
+        ]
+    }
+    ...
+}
+```
+read more about ttypescript [here](https://github.com/cevek/ttypescript)
+
 # Documentation
 Open index.html from the docs folder in a browser
 
