@@ -19,7 +19,7 @@
         "esModuleInterop": true,
         "jsx": "react",
         "plugins": [
-            { "transform": "./src/transformers/register-system.transformer.ts" },
+            { "transform": "./src/transformers/register.transformer.ts" },
         ]
     },
     "include": [

@@ -11,3 +11,4 @@ export * from './src/observer/dispatch-subject';
 export * from './src/ecs/manager';
 
 export declare function registerSystem(manager: ECSManager, system: SystemFn<number>): void;
+export declare function registerEvent(manager: ECSManager, system: SystemFn<Event>): void;

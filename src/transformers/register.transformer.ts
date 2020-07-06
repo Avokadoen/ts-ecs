@@ -1,12 +1,14 @@
-import ts, { CallExpression, isIdentifier, TypeNode, isFunctionTypeNode, isTypeReferenceNode, createLiteral, FlowNode, FlowCall, Expression, isVariableDeclaration, isArrowFunction, NodeArray, ParameterDeclaration, SyntaxKind, isCallExpression, Node, isFunctionDeclaration, isExpressionStatement, TypeChecker, isJSDocSignature, Identifier, isClassDeclaration, MethodDeclaration, sys } from 'typescript';
+import ts, { CallExpression, isIdentifier, TypeNode, isFunctionTypeNode, isTypeReferenceNode, createLiteral, FlowNode, FlowCall, Expression, isVariableDeclaration, isArrowFunction, NodeArray, ParameterDeclaration, SyntaxKind, isCallExpression, Node, isFunctionDeclaration, isExpressionStatement, TypeChecker, isJSDocSignature, Identifier, isClassDeclaration, MethodDeclaration, sys, isCallLikeExpression, CallLikeExpression } from 'typescript';
 import path from 'path';
 
 // SOURCE: https://github.com/kimamula/ts-transformer-keys
 
 
-const registerFunctionName = 'registerSystem';
+const systemFunctionName = 'registerSystem';
+const eventFunctionName = 'registerEvent';
+let systemFnNodeName: Identifier = null;
+let eventFnNodeName: Identifier = null;
 const managerName = 'ECSManager';
-let registerSystemFnNodeName: Identifier = null;
 
 export default function transformer(program: ts.Program): ts.TransformerFactory<ts.SourceFile> {
     return (context: ts.TransformationContext) => (file: ts.SourceFile) => visitNodeAndChildren(file, program, context);
@@ -16,7 +18,7 @@ function visitNodeAndChildren(node: ts.SourceFile, program: ts.Program, context:
 function visitNodeAndChildren(node: ts.Node, program: ts.Program, context: ts.TransformationContext): ts.Node | undefined;
 function visitNodeAndChildren(node: ts.Node, program: ts.Program, context: ts.TransformationContext): ts.Node | undefined {
     const managerClassDeclFinder = (node: ts.Node): ts.Node => {
-        if (registerSystemFnNodeName) {
+        if (systemFnNodeName && eventFnNodeName) {
             return node;
         }
 
@@ -30,14 +32,23 @@ function visitNodeAndChildren(node: ts.Node, program: ts.Program, context: ts.Tr
                     continue;
                 }
                 
-                if (member.name.getText() === registerFunctionName) {
-                    if (ts.isIdentifier(member.name)) {
-                        registerSystemFnNodeName = member.name;
-                        return registerSystemFnNodeName;
-                    } else {
-                        console.error(`ECS internal error: registerSystemFnNode.name was not an identifier, kind: ${member.kind}`);
-                        return member;
+                if (!systemFnNodeName) {
+                    if (member.name.getText() === systemFunctionName) {
+                        if (ts.isIdentifier(member.name)) {
+                            systemFnNodeName = member.name;
+                        } else {
+                            reportInternalError('registerSystemFnNode.name was not an identifier', member);
+                        } 
                     } 
+                }
+                if (!eventFnNodeName) {
+                    if (member.name.getText() === eventFunctionName) {
+                        if (ts.isIdentifier(member.name)) {
+                            eventFnNodeName = member.name;
+                        } else {
+                            reportInternalError('registerEventFnNode.name was not an identifier', member);
+                        } 
+                    }
                 }
             }
         }
@@ -66,14 +77,21 @@ function visitNode(node: ts.Node, program: ts.Program): ts.Node | undefined {
         return node;
     }
 
+    const activeNode = getActiveFnNode(node, typeChecker);
+    if (!activeNode) {
+        return node;
+    }
+    
     const manager = node.arguments[0];
     const system = node.arguments[1];
+
     const properyAccess = ts.createPropertyAccess(
         manager,
-        registerSystemFnNodeName
+        activeNode
     );
 
-    const parametersTypeStrings = extractSystemParameterTypeString(system);
+    const parametersTypeStrings = extractSystemParameterTypeString(system, typeChecker);
+
     const callArguments = ts.createNodeArray([
         system, 
         ts.createArrayLiteral(parametersTypeStrings.map(p => ts.createLiteral(p)))
@@ -87,21 +105,30 @@ function visitNode(node: ts.Node, program: ts.Program): ts.Node | undefined {
     );
 }
 
-function extractSystemParameterTypeString(system: ts.Expression): string[] {
-    // tslint:disable-next-line: no-any
-    const sFlowNode = (system as any).flowNode;
-    if (!sFlowNode) {
-        reportInternalError('expected flowNode on system', system);
+function getActiveFnNode(node: CallExpression, typeChecker: TypeChecker): Identifier | undefined {
+    const { declaration } = typeChecker.getResolvedSignature(node);
+    if (!isFunctionDeclaration(declaration)) {
+        return;
+    }
+
+    switch (declaration.name?.getText()) {
+        case systemFunctionName: 
+            return systemFnNodeName;
+        case eventFunctionName: 
+            return eventFnNodeName;
+        default:
+            return;
+    }
+}
+
+function extractSystemParameterTypeString(system: Expression, typeChecker: TypeChecker): string[] {
+    const {valueDeclaration} = typeChecker.getSymbolAtLocation(system);
+    if (!isVariableDeclaration(valueDeclaration)) {
+        reportInternalError('expected system symbol to be of type variable declatation', system);
         return [];
     }
 
-    const systemVariableDecl = (sFlowNode as ts.FlowAssignment)?.node;
-    if (!isVariableDeclaration(systemVariableDecl)) {
-        reportInternalError('expected node to be a variable declaration', systemVariableDecl);
-        return [];
-    }
-
-    const arrowFunction = systemVariableDecl.initializer;
+    const arrowFunction = valueDeclaration.initializer;
     if (!isArrowFunction(arrowFunction)) {
         reportInternalError('expected initializer to be a variable declaration', arrowFunction);
         return [];
@@ -119,6 +146,12 @@ function extractParametersTypeAsString(parameters: NodeArray<ParameterDeclaratio
         if (t && isTypeReferenceNode(t)) {
             if (isIdentifier(t.typeName)) {
                 let typeString = t.typeName.escapedText as string;
+                // hack to skip template type 
+                // TODO: find more robust solution as generics can be more than one in length ...
+                if (typeString.length <= 1) { 
+                    continue;
+                }
+
                 if (t.typeArguments) {
                     typeString += '<'.repeat(t.typeArguments.length);
                     for (const tArg of t.typeArguments) {
@@ -164,7 +197,8 @@ function isFnParameterTypesCallExpression(node: ts.Node, typeChecker: ts.TypeChe
     return !!declaration
         && !ts.isJSDocSignature(declaration)
         && require.resolve(declaration.getSourceFile().fileName) === indexTs
-        && declaration.name?.getText() === registerFunctionName;
+        && (declaration.name?.getText() === systemFunctionName  
+            || declaration.name?.getText() === eventFunctionName);
 }
 
 function reportInternalError(message: string, context: ts.Node) {
