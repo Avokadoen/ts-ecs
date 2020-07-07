@@ -58,6 +58,20 @@ export class ComponentPool<T extends object> implements IterableIterator<Compone
         };
     }
 
+    public unsafeGet(index: number): Component<T> | undefined {
+        return this.pool[index];
+    }
+
+    // tslint:disable-next-line: no-any
+    public find(predicate: (value: Component<T>, index: number, obj: Component<T>[]) => unknown, thisArg?: any) {
+        return this.pool.find(predicate);
+    }
+
+    // tslint:disable-next-line: no-any
+    public filter(callbackfn: (value: Component<T>, index: number, array: Component<T>[]) => unknown, thisArg?: any): Component<T>[] {
+        return this.pool.filter(callbackfn);
+    }
+
     private onExpandPool(firstExpand?: boolean): void {
         if (firstExpand) {
             this.pool = new Array<Component<T>>(this.stride);
