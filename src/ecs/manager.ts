@@ -2,7 +2,6 @@ import {System, SystemFn} from './system.model';
 import {Entity, EntityEntry} from './entity.model';
 import {Component} from './component.model';
 import {EntityQueryResult, EscQuery, QueryNode, QueryToken, isQueryNode, QueryLeafNode, isQueryLeafNode} from './esc-query.model';
-import {ComponentIdentifier} from './component-identifier.model';
 import { DispatchSubject } from '../observer/dispatch-subject';
 import { createQueryFromIdentifierList } from './query-builder';
 
@@ -34,8 +33,8 @@ export class EntityBuilder {
    * @typeParam T  any class that implements ComponentIdentifier
    * @param component   a new component to be connected with given entity.
    */
-  public addComponent<T extends ComponentIdentifier>(component: T): EntityBuilder {
-    return this.ecsManager.addComponent(this.id, component, this) as EntityBuilder;
+  public addComponent<T extends object>(typeStr: string, component: T): EntityBuilder {
+    return this.ecsManager.addComponent(this.id, typeStr, component, this) as EntityBuilder;
   }
 
   /**
@@ -137,7 +136,6 @@ export class ECSManager {
     });
   }
 
-
   /**
    * Register a system meant to be called each frame by the manager
    *
@@ -157,33 +155,48 @@ export class ECSManager {
     return new EntityBuilder(this.entityId - 1, this);
   }
 
+  public registerComponentType<T>(typeStr: string, defaultValues: T) {
+    if (this.components.has(typeStr)) {
+      return;
+    }
+
+    // TODO: here we would preallocate, but we will wait until pool implementation
+    this.components.set(typeStr, []);
+  }
+
   /**
    * @typeParam T  any class that implements ComponentIdentifier
    * @param entityId  id of entity that is supposed to be updated
    * @param component  a new component to be connected with given entity.
    * @param builder  Used by the EntityBuilder to cache itself, can be ignored usually
    */
-  public addComponent<T extends ComponentIdentifier>(entityId: number, component: T, builder?: EntityBuilder): EntityBuilder | void  {
-    const compName = component.identifier();
-    if (this.components.get(compName)?.find(c => c.entityId === entityId)) {
-      return builder ?? new EntityBuilder(entityId, this); // TODO: errorhandling
+  public addComponent<T extends object>(entityId: number, typeStr: string, component?: T, builder?: EntityBuilder): EntityBuilder | void  {
+    const builderRtr = (builder?: EntityBuilder) => {
+      return builder ?? new EntityBuilder(entityId, this);
+    };
+
+    if (!this.components.has(typeStr)) {
+      return; // TODO: errorhandling
+    }
+
+    const components = this.components.get(typeStr);
+
+    if (components.find(c => c.entityId === entityId)) {
+      return; // TODO: errorhandling
     }
 
     if (this.isRunningSystems) {
       this.afterUpdateLoop.subscribe(() => {
-        this.addComponent(entityId, component);
+        this.addComponent(entityId, typeStr, component);
       });
-      return builder ?? new EntityBuilder(entityId, this);
+      return builderRtr(builder);
     }
 
-    if (!this.components.has(compName)) {
-      this.components.set(compName, new Array<Component<T>>());
-    }
-    const actualComponent = {entityId, data: component};
-    this.components.get(compName).push(actualComponent);
+    const actualComponent: Component<T> = {entityId, data: component};
+    components.push(actualComponent);
 
-    this.invalidateQueryResults(compName);
-    return builder ?? new EntityBuilder(entityId, this);
+    this.invalidateQueryResults(typeStr);
+    return builderRtr(builder);
   }
 
   /**
@@ -191,18 +204,18 @@ export class ECSManager {
    * @param identifier   the type identifier for the component you want to remove
    * @param builder  Used by the EntityBuilder to cache itself, can be ignored usually
    */
-  public removeComponent(entityId: number, identifier: string, builder?: EntityBuilder): EntityBuilder | void {
+  public removeComponent(entityId: number, typeStr: string, builder?: EntityBuilder): EntityBuilder | void {
     if (this.isRunningSystems) {
       this.afterUpdateLoop.subscribe(() => {
-        this.removeComponent(entityId, identifier);
+        this.removeComponent(entityId, typeStr);
       });
       return;
     }
 
-    const components = this.components.get(identifier).filter(c => c.entityId !== entityId);
-    this.components.set(identifier, components);
+    const components = this.components.get(typeStr).filter(c => c.entityId !== entityId);
+    this.components.set(typeStr, components);
 
-    this.invalidateQueryResults(identifier);
+    this.invalidateQueryResults(typeStr);
     return builder ?? new EntityBuilder(entityId, this);
   }
 
@@ -213,18 +226,6 @@ export class ECSManager {
    * will be shared each iteration
    */
   public queryEntities(query: EscQuery): EntityQueryResult {
-    const entityIdReducer = (previousValues: EntityEntry[], value: Component<object>, currentIndex: number): EntityEntry[] => {
-      const existing = previousValues.find(n => n.id === value.entityId);
-      if (!existing) {
-        let newEntry: EntityEntry = { id: value.entityId, components: new Map() };
-        newEntry.components.set((value.data as ComponentIdentifier).identifier(), currentIndex);
-        previousValues.push(newEntry);
-      } else {
-        existing.components.set((value.data as ComponentIdentifier).identifier(), currentIndex);
-      }
-      return previousValues;
-    };
-
     const andFn = (thisResult: EntityEntry[], values: EntityEntry[]): EntityEntry[] => {
       const least = (thisResult.length < values.length) ? thisResult : values;
       const biggest = (thisResult.length >= values.length) ? thisResult : values;
@@ -269,8 +270,28 @@ export class ECSManager {
             return [];
         }
       } else {
-        const components = this.components.get(query.identifier);
-        const thisResult: EntityEntry[] = components?.filter(c => !isNaN(c.entityId)).reduce(entityIdReducer, []) ?? [];
+        const typeStr = query.typeStr;
+
+        const components = this.components.get(typeStr);
+
+        // TODO: refactor so we don't need variable from outside scope
+        //       clean so it's more readable
+        const thisResult: EntityEntry[] = components?.filter(c => !isNaN(c.entityId))
+        .reduce((
+          previousValues: EntityEntry[], 
+          value: Component<object>, 
+          currentIndex: number): EntityEntry[] => {
+            const existing = previousValues.find(n => n.id === value.entityId);
+            if (!existing) {
+              let newEntry: EntityEntry = { id: value.entityId, components: new Map() };
+              newEntry.components.set(typeStr, currentIndex);
+              previousValues.push(newEntry);
+            } else {
+              existing.components.set(typeStr, currentIndex);
+            }
+            return previousValues;
+        }, []) ?? [];
+
         return thisResult;
       }
     };
@@ -339,12 +360,12 @@ export class ECSManager {
    *
    * @return requested component or null
    */
-  public accessComponentData<T extends ComponentIdentifier>(compType: T, index: number): T | null {
+  public accessComponentData<T extends object>(typeStr: string, index: number): T | null {
     if (index < 0) {
       return null;
     }
 
-    const components = this.components.get(compType.identifier());
+    const components = this.components.get(typeStr);
     if (components.length <= index) {
       return null;
     }
@@ -432,7 +453,7 @@ export class ECSManager {
 
         return false;
       } else {
-        return node.identifier === identifier;
+        return node.typeStr === identifier;
       }
     };
 

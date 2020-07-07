@@ -10,7 +10,7 @@ describe('Query runtime components', () => {
         const query: QueryNode = {
             token: QueryToken.OR,
             leftChild: {
-                identifier: TestCompTwo.identifier
+                typeStr: TestCompTwo.identifier
             }
         };
 
@@ -32,10 +32,10 @@ describe('Query runtime components', () => {
         const query: QueryNode = {
             token: QueryToken.AND,
             leftChild: {
-                identifier: TestCompOne.identifier
+                typeStr: TestCompOne.identifier
             },
             rightChild: {
-                identifier: TestCompThree.identifier
+                typeStr: TestCompThree.identifier
             }
         };
 
@@ -67,7 +67,7 @@ describe('Query runtime components', () => {
             leftChild: {
                 token: QueryToken.OR,
                 leftChild: {
-                    identifier: TestCompOne.identifier
+                    typeStr: TestCompOne.identifier
                 }
             }
         };

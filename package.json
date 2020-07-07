@@ -11,6 +11,10 @@
     "build": "npm run lint && ttsc",
     "test": "npm run build && jasmine-ts \"spec/**/*.spec.ts\""
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Avokadoen/ts-ecs"
+  },
   "keywords": [
     "ECS",
     "Typescript",

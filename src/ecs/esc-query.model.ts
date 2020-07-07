@@ -49,7 +49,7 @@ export interface QueryNode {
 }
 
 export interface QueryLeafNode {
-  identifier: string;
+  typeStr: string;
 }
 
 export function isQueryNode(node: QueryNode | QueryLeafNode): node is QueryNode {
@@ -57,5 +57,5 @@ export function isQueryNode(node: QueryNode | QueryLeafNode): node is QueryNode 
 }
 
 export function isQueryLeafNode(node: QueryNode | QueryLeafNode): node is QueryLeafNode {
-  return (node as QueryLeafNode).identifier !== undefined;
+  return (node as QueryLeafNode).typeStr !== undefined;
 }

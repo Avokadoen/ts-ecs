@@ -2,10 +2,9 @@ import { ECSManager } from "../../src/ecs/manager";
 import { registerSystem, System, registerEvent } from "../../index";
 import { TestCompTwo, TestCompOne } from "../utility";
 import { Component } from "../../src/ecs/component.model";
-import { QueryToken } from "../../src/ecs/esc-query.model";
-import { ComponentIdentifier } from "../../src/ecs/component-identifier.model";
+import { QueryToken, QueryNode } from "../../src/ecs/esc-query.model";
 
-class OtherClass<T extends ComponentIdentifier> implements ComponentIdentifier{
+class OtherClass<T extends object> {
     identifier: () => 'OtherClass';
     myOtherClass: T;
 }
@@ -14,13 +13,13 @@ const simpleSystemType = <T>(_: T, tOne: Component<TestCompOne>, tTwo: Component
     console.log('wow1');
 };
 
-const simpleQueryResult = {
+const simpleQueryResult: QueryNode = {
     token: QueryToken.AND,
     leftChild: {
-        identifier: 'Component<TestCompOne>'
+        typeStr: 'Component<TestCompOne>'
     },
     rightChild: {
-        identifier: 'Component<TestCompTwo>'
+        typeStr: 'Component<TestCompTwo>'
     }
 };
 
@@ -28,10 +27,10 @@ const complexSystemType = <T>(_: T, tOne: Component<OtherClass<OtherClass<TestCo
     console.log('wow2');
 };
 
-const complexQueryResult = {
+const complexQueryResult: QueryNode = {
     token: QueryToken.OR,
     leftChild: {
-        identifier: 'Component<OtherClass<OtherClass<TestCompOne>>>'
+        typeStr: 'Component<OtherClass<OtherClass<TestCompOne>>>'
     },
 };
 
@@ -87,7 +86,7 @@ describe('Register event transformer', () => {
             {
                 token: QueryToken.OR,
                 leftChild: {
-                    identifier: 'Component<OtherClass<OtherClass<TestCompOne>>>'
+                    typeStr: 'Component<OtherClass<OtherClass<TestCompOne>>>'
                 },
             }
         );

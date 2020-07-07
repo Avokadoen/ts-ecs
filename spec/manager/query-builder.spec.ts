@@ -13,7 +13,7 @@ describe('Query builder creates valid query tree', () => {
         expect(query).toEqual({
             token: QueryToken.OR,
             leftChild: {
-                identifier: identifier1
+                typeStr: identifier1
             }
         });
     });
@@ -29,10 +29,10 @@ describe('Query builder creates valid query tree', () => {
         expect(query).toEqual({
             token: QueryToken.AND,
             leftChild: {
-                identifier: identifier1
+                typeStr: identifier1
             },
             rightChild: {
-                identifier: identifier2
+                typeStr: identifier2
             }
         });
     });
@@ -49,15 +49,15 @@ describe('Query builder creates valid query tree', () => {
         expect(query).toEqual({
             token: QueryToken.AND,
             leftChild: {
-                identifier: identifier1
+                typeStr: identifier1
             },
             rightChild: {
                 token: QueryToken.OR,
                 leftChild: {
-                    identifier: identifier2
+                    typeStr: identifier2
                 },
                 rightChild: {
-                    identifier: identifier3
+                    typeStr: identifier3
                 }
             }
         });
@@ -70,7 +70,7 @@ describe('Query builder creates valid query tree', () => {
             {
                 token: QueryToken.OR,
                 leftChild: {
-                    identifier: identifier1
+                    typeStr: identifier1
                 },
             }
         );
@@ -83,10 +83,10 @@ describe('Query builder creates valid query tree', () => {
             {
                 token: QueryToken.AND,
                 leftChild: {
-                    identifier: identifier1
+                    typeStr: identifier1
                 },
                 rightChild: {
-                    identifier: identifier2
+                    typeStr: identifier2
                 }
             }
         );
@@ -99,15 +99,15 @@ describe('Query builder creates valid query tree', () => {
             {
                 token: QueryToken.AND,
                 leftChild: {
-                    identifier: identifier1
+                    typeStr: identifier1
                 },
                 rightChild:    {
                     token: QueryToken.AND,
                     leftChild: {
-                        identifier: identifier2
+                        typeStr: identifier2
                     },
                     rightChild: {
-                        identifier: identifier3
+                        typeStr: identifier3
                     }
                 }
             }
@@ -122,20 +122,20 @@ describe('Query builder creates valid query tree', () => {
             {
                 token: QueryToken.AND,
                 leftChild: {
-                    identifier: identifier1
+                    typeStr: identifier1
                 },
                 rightChild:    {
                     token: QueryToken.AND,
                     leftChild: {
-                        identifier: identifier2
+                        typeStr: identifier2
                     },
                     rightChild: {
                         token: QueryToken.AND,
                         leftChild: {
-                            identifier: identifier3
+                            typeStr: identifier3
                         },
                         rightChild: {
-                            identifier: identifier4
+                            typeStr: identifier4
                         }
                     }
                 }
@@ -151,12 +151,12 @@ describe('Query builder creates valid query tree', () => {
             {
                 token: QueryToken.AND,
                 leftChild: {
-                    identifier: identifier1
+                    typeStr: identifier1
                 },
                 rightChild:    {
                     token: QueryToken.OR,
                     leftChild: {
-                        identifier: identifier2
+                        typeStr: identifier2
                     },
                     rightChild: 
                     {
@@ -164,10 +164,10 @@ describe('Query builder creates valid query tree', () => {
                         leftChild: {
                             token: QueryToken.AND,
                             leftChild: {
-                                identifier: identifier3
+                                typeStr: identifier3
                             },
                             rightChild: {
-                                identifier: identifier4
+                                typeStr: identifier4
                             }
                         },
                     }

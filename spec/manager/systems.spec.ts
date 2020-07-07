@@ -11,15 +11,21 @@ describe('Systems', () => {
     const query: QueryNode = {
         token: QueryToken.OR,
         leftChild: {
-            identifier: TestCompFour.identifier
+            typeStr: TestCompFour.identifier
         }
     };
 
-    it('Should mutate component state on dispatch', () => {
-        const manager = new ECSManager();
+    let manager: ECSManager;
+    beforeEach(() => {  
+        manager = new ECSManager();
+        manager.registerComponentType(TestCompOne.identifier, new TestCompOne());
+        manager.registerComponentType(TestCompThree.identifier, new TestCompThree());
+        manager.registerComponentType(TestCompFour.identifier, new TestCompFour(0));
+    });
 
+    it('Should mutate component state on dispatch', () => {
         const compFourRef = new TestCompFour(0);
-        manager.createEntity().addComponent(compFourRef);
+        manager.createEntity().addComponent(TestCompFour.identifier, compFourRef);
 
         manager.registerSystemWithEscQuery(testSystem, query);
 
@@ -32,10 +38,8 @@ describe('Systems', () => {
     });
 
     it('Should mutate component state on event', () => {
-        const manager = new ECSManager();
-
         const compFourRef = new TestCompFour(0);
-        manager.createEntity().addComponent(compFourRef);
+        manager.createEntity().addComponent(TestCompFour.identifier, compFourRef);
 
         const index = manager.registerEventWithEscQuery(testSystem, query);
 
@@ -48,24 +52,22 @@ describe('Systems', () => {
     });
 
     it('Should delete self only after dispatch', () => {
-        const manager = new ECSManager();
-
         const compFourRef = new TestCompFour(0);
-        manager.createEntity().addComponent(compFourRef);
+        manager.createEntity().addComponent(TestCompFour.identifier, compFourRef);
 
-        manager.createEntity().addComponent(new TestCompOne());
-        manager.createEntity().addComponent(new TestCompOne());
-        manager.createEntity().addComponent(new TestCompOne());
+        manager.createEntity().addComponent(TestCompOne.identifier, new TestCompOne());
+        manager.createEntity().addComponent(TestCompOne.identifier, new TestCompOne());
+        manager.createEntity().addComponent(TestCompOne.identifier, new TestCompOne());
 
         const deleteQuery: QueryNode = {
             token: QueryToken.OR,
             leftChild: {
-                identifier: TestCompOne.identifier
+                typeStr: TestCompOne.identifier
             },
             rightChild: {
                 token: QueryToken.SHARED,
                 leftChild: {
-                    identifier: TestCompFour.identifier
+                    typeStr: TestCompFour.identifier
                 }
             }
         };
@@ -75,7 +77,7 @@ describe('Systems', () => {
 
             four.someState += 1;
 
-            manager.removeComponent(testCompOne.entityId, testCompOne.data.identifier());
+            manager.removeComponent(testCompOne.entityId, TestCompOne.identifier);
         };
 
         manager.registerSystemWithEscQuery(deleteSelfSystem, deleteQuery);
@@ -87,22 +89,20 @@ describe('Systems', () => {
     });
 
     it('Should add new component only after dispatch', () => {
-        const manager = new ECSManager();
-
         const compFourRef = new TestCompFour(0);
-        manager.createEntity().addComponent(compFourRef);
+        manager.createEntity().addComponent(TestCompFour.identifier, compFourRef);
 
-        manager.createEntity().addComponent(new TestCompOne());
+        manager.createEntity().addComponent(TestCompOne.identifier, new TestCompOne());
 
         const addQuery: QueryNode = {
             token: QueryToken.OR,
             leftChild: {
-                identifier: TestCompOne.identifier
+                typeStr: TestCompOne.identifier
             },
             rightChild: {
                 token: QueryToken.SHARED,
                 leftChild: {
-                    identifier: TestCompFour.identifier
+                    typeStr: TestCompFour.identifier
                 }
             }
         };
@@ -112,7 +112,7 @@ describe('Systems', () => {
 
             four.someState += 1;
 
-            manager.createEntity().addComponent(new TestCompOne());
+            manager.createEntity().addComponent(TestCompOne.identifier, new TestCompOne());
         };
 
         manager.registerSystemWithEscQuery(addNewSystem, addQuery);
@@ -124,13 +124,11 @@ describe('Systems', () => {
     });
 
     it('Should update query result on remove', () => {
-        const manager = new ECSManager();
-
         const compFourRef = new TestCompFour(0);
-        const entityBuilder = manager.createEntity().addComponent(compFourRef);
+        const entityBuilder = manager.createEntity().addComponent(TestCompFour.identifier, compFourRef);
 
         const otherCompFourRef = new TestCompFour(0);
-        manager.createEntity().addComponent(otherCompFourRef);
+        manager.createEntity().addComponent(TestCompFour.identifier, otherCompFourRef);
 
         manager.registerSystemWithEscQuery(testSystem, query);
 
@@ -144,14 +142,12 @@ describe('Systems', () => {
     });
 
     it('Should update query result on add', () => {
-        const manager = new ECSManager();
-
         const compFourRef = new TestCompFour(0);
         const entityBuilder = manager.createEntity();
 
         manager.registerSystemWithEscQuery(testSystem, query);
 
-        entityBuilder.addComponent(compFourRef);
+        entityBuilder.addComponent(TestCompFour.identifier, compFourRef);
 
         manager.dispatch();
         manager.dispatch();
@@ -167,30 +163,28 @@ describe('Systems', () => {
     };
 
     it('Should share entity between entities in system dispatch', () => {
-        const manager = new ECSManager();
-
         const compFourRef = new TestCompFour(0);
         manager.createEntity()
-            .addComponent(compFourRef)
-            .addComponent(new TestCompThree());
+            .addComponent(TestCompFour.identifier, compFourRef)
+            .addComponent(TestCompThree.identifier, new TestCompThree());
 
-        manager.createEntity().addComponent(new TestCompOne());
-        manager.createEntity().addComponent(new TestCompOne());
+        manager.createEntity().addComponent(TestCompOne.identifier, new TestCompOne());
+        manager.createEntity().addComponent(TestCompOne.identifier, new TestCompOne());
 
         const query: QueryNode = {
             token: QueryToken.OR,
             leftChild: {
-                identifier: TestCompOne.identifier
+                typeStr: TestCompOne.identifier
             },
             rightChild: {
                 token: QueryToken.SHARED,
                 leftChild: {
                     token: QueryToken.AND,
                     leftChild: {
-                        identifier: TestCompFour.identifier
+                        typeStr: TestCompFour.identifier
                     },
                     rightChild: {
-                        identifier: TestCompThree.identifier
+                        typeStr: TestCompThree.identifier
                     }
                 },
             }
@@ -204,30 +198,28 @@ describe('Systems', () => {
     });
 
     it('Should share entity between entities in system event with AND', () => {
-        const manager = new ECSManager();
-
         const compFourRef = new TestCompFour(0);
         manager.createEntity()
-            .addComponent(compFourRef)
-            .addComponent(new TestCompThree());
+            .addComponent(TestCompFour.identifier, compFourRef)
+            .addComponent(TestCompThree.identifier, new TestCompThree());
 
-        manager.createEntity().addComponent(new TestCompOne());
-        manager.createEntity().addComponent(new TestCompOne());
+        manager.createEntity().addComponent(TestCompOne.identifier, new TestCompOne());
+        manager.createEntity().addComponent(TestCompOne.identifier, new TestCompOne());
 
         const query: QueryNode = {
             token: QueryToken.OR,
             leftChild: {
-                identifier: TestCompOne.identifier
+                typeStr: TestCompOne.identifier
             },
             rightChild: {
                 token: QueryToken.SHARED,
                 leftChild: {
                     token: QueryToken.AND,
                     leftChild: {
-                        identifier: TestCompFour.identifier
+                        typeStr: TestCompFour.identifier
                     },
                     rightChild: {
-                        identifier: TestCompThree.identifier
+                        typeStr: TestCompThree.identifier
                     }
                 },
             }
@@ -241,30 +233,28 @@ describe('Systems', () => {
     });
 
     it('Should share entity between entities in system event with OR', () => {
-        const manager = new ECSManager();
-
         const compFourRef = new TestCompFour(0);
-        manager.createEntity().addComponent(compFourRef);
-        manager.createEntity().addComponent(compFourRef);
-        manager.createEntity().addComponent(new TestCompThree());
+        manager.createEntity().addComponent(TestCompFour.identifier, compFourRef);
+        manager.createEntity().addComponent(TestCompFour.identifier, compFourRef);
+        manager.createEntity().addComponent(TestCompThree.identifier, new TestCompThree());
 
-        manager.createEntity().addComponent(new TestCompOne());
-        manager.createEntity().addComponent(new TestCompOne());
+        manager.createEntity().addComponent(TestCompOne.identifier, new TestCompOne());
+        manager.createEntity().addComponent(TestCompOne.identifier, new TestCompOne());
 
         const query: QueryNode = {
             token: QueryToken.OR,
             leftChild: {
-                identifier: TestCompOne.identifier
+                typeStr: TestCompOne.identifier
             },
             rightChild: {
                 token: QueryToken.SHARED,
                 leftChild: {
                     token: QueryToken.OR,
                     leftChild: {
-                        identifier: TestCompFour.identifier
+                        typeStr: TestCompFour.identifier
                     },
                     rightChild: {
-                        identifier: TestCompThree.identifier
+                        typeStr: TestCompThree.identifier
                     }
                 },
             }

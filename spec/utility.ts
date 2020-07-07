@@ -1,72 +1,60 @@
-import { ComponentIdentifier } from "../src/ecs/component-identifier.model";
 import { ECSManager } from "../src/ecs/manager";
 import { Entity } from "../src/ecs/entity.model";
 
-export class TestCompOne implements ComponentIdentifier {
-    static readonly identifier = 'TestComp1';
-
-    identifier(): string {
-        return TestCompOne.identifier;
-    }
+export class TestCompOne {
+    static readonly identifier = 'TestCompOne';
 }
 
-export class TestCompTwo implements ComponentIdentifier {
-    static readonly identifier = 'TestComp2';
-
-    identifier(): string {
-        return TestCompTwo.identifier;
-    }
+export class TestCompTwo {
+    static readonly identifier = 'TestCompTwo';
 }
 
-export class TestCompThree implements ComponentIdentifier {
-    static readonly identifier = 'TestComp3';
-
-    identifier(): string {
-        return TestCompThree.identifier;
-    }
+export class TestCompThree {
+    static readonly identifier = 'TestCompThree';
 }
 
-export class TestCompFour implements ComponentIdentifier {
-    static readonly identifier = 'TestComp4';
+export class TestCompFour {
+    static readonly identifier = 'TestCompFour';
 
     constructor(public someState: number) { }
-
-    identifier(): string {
-        return TestCompFour.identifier;
-    }
 }
 
 
 export function createSimpleQueryScenario(manager: ECSManager) {
+    manager.registerComponentType(TestCompOne.identifier, new TestCompOne());
+    manager.registerComponentType(TestCompTwo.identifier, new TestCompTwo());
+    manager.registerComponentType(TestCompThree.identifier, new TestCompThree());
+    manager.registerComponentType(TestCompFour.identifier, new TestCompFour(0));
+
     // Entity: 0
     manager.createEntity()
-        .addComponent(new TestCompOne());
+        .addComponent(TestCompOne.identifier, new TestCompOne());
 
     // Entity: 1
     manager.createEntity();
 
     // Entity: 2
     manager.createEntity()
-        .addComponent(new TestCompTwo());
+        .addComponent(TestCompTwo.identifier, new TestCompTwo());
 
     // Entity: 3
     manager.createEntity()
-        .addComponent(new TestCompThree())
-        .addComponent(new TestCompOne());
+        .addComponent(TestCompThree.identifier, new TestCompThree())
+        .addComponent(TestCompOne.identifier, new TestCompOne());
 
     // Entity: 4
     manager.createEntity()
-        .addComponent(new TestCompThree());
+        .addComponent(TestCompThree.identifier, new TestCompThree());
 
     // Entity: 5
     manager.createEntity()
-        .addComponent(new TestCompOne())
-        .addComponent(new TestCompThree());
+        .addComponent(TestCompOne.identifier, new TestCompOne())
+        .addComponent(TestCompThree.identifier, new TestCompThree());
 
     // Entity: 6
     manager.createEntity()
-        .addComponent(new TestCompFour(0))
-        .addComponent(new TestCompThree());
+        .addComponent(TestCompFour.identifier, new TestCompFour(0))
+        .addComponent(TestCompThree.identifier, new TestCompThree());
 
     return manager;
 }

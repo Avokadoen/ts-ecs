@@ -69,11 +69,11 @@ export class QueryBuilder {
 
         if (!this.currentNode.leftChild) {
             this.currentNode.leftChild = {
-                identifier: identifier
+                typeStr: identifier
             };
         } else if (!this.currentNode.rightChild) {
             this.currentNode.rightChild = {
-                identifier: identifier
+                typeStr: identifier
             };
         }
 

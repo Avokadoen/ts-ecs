@@ -23,7 +23,7 @@ describe('Query Entities', () => {
         const query: QueryNode = {
             token: QueryToken.AND,
             leftChild: {
-                identifier: TestCompTwo.identifier
+                typeStr: TestCompTwo.identifier
             }
         };
         
@@ -36,7 +36,7 @@ describe('Query Entities', () => {
         const query: QueryNode = {
             token: QueryToken.OR,
             leftChild: {
-                identifier: TestCompTwo.identifier
+                typeStr: TestCompTwo.identifier
             }
         };
         
@@ -49,7 +49,7 @@ describe('Query Entities', () => {
         const query: QueryNode = {
             token: QueryToken.OR,
             leftChild: {
-                identifier: TestCompOne.identifier
+                typeStr: TestCompOne.identifier
             }
         };
         
@@ -63,10 +63,10 @@ describe('Query Entities', () => {
         const query: QueryNode = {
             token: QueryToken.AND,
             leftChild: {
-                identifier: TestCompOne.identifier
+                typeStr: TestCompOne.identifier
             },
             rightChild: {
-                identifier: TestCompThree.identifier
+                typeStr: TestCompThree.identifier
             }
         };
 
@@ -80,10 +80,10 @@ describe('Query Entities', () => {
         const query: QueryNode = {
             token: QueryToken.AND,
             leftChild: {
-                identifier: TestCompThree.identifier
+                typeStr: TestCompThree.identifier
             },
             rightChild: {
-                identifier: TestCompOne.identifier
+                typeStr: TestCompOne.identifier
             }
         };
 
@@ -97,10 +97,10 @@ describe('Query Entities', () => {
         const query: QueryNode = {
             token: QueryToken.OR,
             leftChild: {
-                identifier: TestCompThree.identifier
+                typeStr: TestCompThree.identifier
             },
             rightChild: {
-                identifier: TestCompTwo.identifier
+                typeStr: TestCompTwo.identifier
             }
         };
 
@@ -114,10 +114,10 @@ describe('Query Entities', () => {
         const query: QueryNode = {
             token: QueryToken.NOT,
             leftChild: {
-                identifier: TestCompThree.identifier
+                typeStr: TestCompThree.identifier
             },
             rightChild: {
-                identifier: TestCompOne.identifier
+                typeStr: TestCompOne.identifier
             }
         };
 
@@ -159,17 +159,17 @@ describe('Query Entities', () => {
         const query: QueryNode = {
             token: QueryToken.OR,
             leftChild: {
-                identifier: TestCompOne.identifier
+                typeStr: TestCompOne.identifier
             },
             rightChild: {
                 token: QueryToken.SHARED,
                 leftChild: {
                     token: QueryToken.OR,
                     leftChild: {
-                        identifier: TestCompFour.identifier
+                        typeStr: TestCompFour.identifier
                     },
                     rightChild: {
-                        identifier: TestCompThree.identifier
+                        typeStr: TestCompThree.identifier
                     }
                 },
             }
@@ -185,21 +185,27 @@ describe('Query Entities', () => {
     describe('Bigger data set', () => {
         const _manager = new ECSManager();
 
-        for (let i = 0; i < 100; i++) {
-            _manager.createEntity()
-                .addComponent(new TestCompFour(i))
-                .addComponent(new TestCompOne())
-                .addComponent(new TestCompTwo());
-        }
+        beforeAll(() => {
+            _manager.registerComponentType(TestCompOne.identifier, new TestCompOne());
+            _manager.registerComponentType(TestCompTwo.identifier, new TestCompTwo());
+            _manager.registerComponentType(TestCompFour.identifier, new TestCompFour(0));
+    
+            for (let i = 0; i < 100; i++) {
+                _manager.createEntity()
+                    .addComponent(TestCompFour.identifier, new TestCompFour(i))
+                    .addComponent(TestCompOne.identifier, new TestCompOne())
+                    .addComponent(TestCompTwo.identifier, new TestCompTwo());
+            }
+        });
 
         it('Should find all entities meeting requirement', () => {
             const query: QueryNode = {
                 token: QueryToken.AND,
                 leftChild: {
-                    identifier: TestCompOne.identifier
+                    typeStr: TestCompOne.identifier
                 },
                 rightChild: {
-                    identifier: TestCompFour.identifier
+                    typeStr: TestCompFour.identifier
                 }
             };
 
@@ -212,10 +218,10 @@ describe('Query Entities', () => {
             const query: QueryNode = {
                 token: QueryToken.AND,
                 leftChild: {
-                    identifier: TestCompOne.identifier
+                    typeStr: TestCompOne.identifier
                 },
                 rightChild: {
-                    identifier: TestCompThree.identifier
+                    typeStr: TestCompThree.identifier
                 }
             };
 
