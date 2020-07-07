@@ -1,4 +1,5 @@
 import { Component } from "../ecs/component.model";
+import { isObject } from "util";
 
 // TODO: iterator will break if you break early out of loop 
 export class ComponentPool<T extends object> implements IterableIterator<Component<T>> {
@@ -73,28 +74,28 @@ export class ComponentPool<T extends object> implements IterableIterator<Compone
     }
 
     // Source: https://medium.com/javascript-in-plain-english/how-to-deep-copy-objects-and-arrays-in-javascript-7c911359b089
-    private deepCopy<G>(target: G): G {
-        if (!target) {
-            return target;
+    private deepCopy<G>(source: G): G {
+        if (!source || typeof source !== 'object') {
+            return source;
         }
 
         // tslint:disable-next-line: no-any
-        let copy: any = Array.isArray(target) ? [] : {};
+        let copy: any = Array.isArray(source) ? [] : {};
 
-        for (const key in target) {
-            copy[key] = this.deepCopy(target[key]);
+        for (const key in source) {
+            copy[key] = this.deepCopy(source[key]);
         }
 
         return copy as G;
     }
 
-    private deepClone<G>(target: G, source: G) {
-        if (!target) {
-            return target;
+    private deepClone<G>(source: G, target: G) {
+        if (!source || typeof source !== 'object') {
+            target = source;
         }
 
-        for (const key in source) {
-            this.deepClone(target[key], source[key]);
+        for (const key in target) {
+            this.deepClone(source[key], target[key]);
         }
     }
 }

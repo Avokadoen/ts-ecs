@@ -53,5 +53,36 @@ describe('Pool', () => {
 
         expect(count - 1).toBe(5);
     });
+
+    it('Should deep copy and clone', () => {
+        interface MyComp {
+            someData: number;
+        }
+
+        const defaultValue: MyComp = {
+            someData: 1
+        };
+        const pool = new ComponentPool(defaultValue);
+
+        pool.add(1);
+
+        const overrideValue: MyComp = {
+            someData: 42
+        };
+        pool.add(2, overrideValue);
+
+        let count = 1;
+        for (const comp of pool) {
+            if (count === 1) {
+                expect(comp.data).not.toBe(defaultValue);
+                expect(comp.data).toEqual(defaultValue);
+            } else {
+                expect(comp.data).not.toBe(overrideValue);
+                expect(comp.data).toEqual(defaultValue);
+            }
+
+            count += 1;
+        }
+    });
     
 });
