@@ -32,7 +32,7 @@ export class EntityBuilder {
 
   /**
    * A facade to {@link ECSManager.addComponent}
-   * @typeParam T  any class that implements ComponentIdentifier
+   * @typeParam T any object you would like to be a component. Should only be data, and not any functions
    * @param component   a new component to be connected with given entity.
    */
   public addComponent<T extends object>(typeStr: string, component?: T): EntityBuilder {
@@ -41,7 +41,7 @@ export class EntityBuilder {
 
   /**
    * A facade to {@link ECSManager.removeComponent}
-   * @typeParam T  any class that implements ComponentIdentifier
+   * @typeParam T any object you would like to be a component. Should only be data, and not any functions
    * @param typeStr   the type typeStrs for the component you want to remove
    */
   public removeComponent(typeStrs: string): EntityBuilder {
@@ -178,7 +178,7 @@ export class ECSManager {
    * This is the non transform version of addComponent
    * You should probably call {@link addComponent} from the index instead
    * 
-   * @typeParam T  any class that implements ComponentIdentifier
+  * @typeParam T any object you would like to be a component. Should only be data, and not any functions
    * @param entityId  id of entity that is supposed to be updated
    * @param component  a new component to be connected with given entity.
    * @param builder  Used by the EntityBuilder to cache itself, can be ignored usually
