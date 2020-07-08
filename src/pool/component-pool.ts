@@ -1,5 +1,4 @@
 import { Component } from "../ecs/component.model";
-import { isObject } from "util";
 
 // TODO: iterator will break if you break early out of loop 
 export class ComponentPool<T extends object> implements IterableIterator<Component<T>> {

@@ -12,5 +12,6 @@ export * from './src/ecs/manager';
 export declare function registerSystem(manager: ECSManager, system: SystemFn<number>): void;
 export declare function registerEvent(manager: ECSManager, system: SystemFn<Event>): void;
 
+export declare function registerComponentType<T>(manager: ECSManager, defaultValue: T): void;
 // export declare function addComponent<T>(manager: ECSManager, entityId: number): void;
 // export declare function addComponent<T>(manager: ECSManager, entityId: number, initial: T): void;
