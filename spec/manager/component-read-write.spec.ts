@@ -42,7 +42,7 @@ describe('Component read/write', () => {
             manager.createEntity().addComponent(TestCompFour.identifier, new TestCompFour(10));
 
             const testCompAccessed = manager.accessComponentData(TestCompFour.identifier, 999) as TestCompFour;
-            expect(testCompAccessed).toBeNull('Got component on invalid access');
+            expect(testCompAccessed).toBeUndefined('Got component on invalid access');
         });
     });
 });

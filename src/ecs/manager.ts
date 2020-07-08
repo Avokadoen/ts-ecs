@@ -4,6 +4,8 @@ import {Component} from './component.model';
 import {EntityQueryResult, EscQuery, QueryNode, QueryToken, isQueryNode, QueryLeafNode, isQueryLeafNode} from './esc-query.model';
 import { DispatchSubject } from '../observer/dispatch-subject';
 import { createQueryFromIdentifierList } from './query-builder';
+import { ComponentPool } from '../pool/component-pool';
+import { isNumber } from 'util';
 
 /**
  * Builder for entities. Enables end user to chain operations.
@@ -33,7 +35,7 @@ export class EntityBuilder {
    * @typeParam T  any class that implements ComponentIdentifier
    * @param component   a new component to be connected with given entity.
    */
-  public addComponent<T extends object>(typeStr: string, component: T): EntityBuilder {
+  public addComponent<T extends object>(typeStr: string, component?: T): EntityBuilder {
     return this.ecsManager.addComponent(this.id, typeStr, component, this) as EntityBuilder;
   }
 
@@ -69,7 +71,7 @@ export class ECSManager {
   /**
    * @ignore
    */
-  private components = new Map<string, Component<object>[]>();
+  private components = new Map<string, ComponentPool<object>>();
 
   /**
    * @ignore
@@ -155,13 +157,13 @@ export class ECSManager {
     return new EntityBuilder(this.entityId - 1, this);
   }
 
-  public registerComponentType<T>(typeStr: string, defaultValues: T) {
+  // avoid calling this is game loop
+  public registerComponentType<T extends object>(typeStr: string, defaultValue: T) {
     if (this.components.has(typeStr)) {
       return;
     }
 
-    // TODO: here we would preallocate, but we will wait until pool implementation
-    this.components.set(typeStr, []);
+    this.components.set(typeStr, new ComponentPool<T>(defaultValue));
   }
 
   /**
@@ -192,8 +194,7 @@ export class ECSManager {
       return builderRtr(builder);
     }
 
-    const actualComponent: Component<T> = {entityId, data: component};
-    components.push(actualComponent);
+    components.add(entityId, component);
 
     this.invalidateQueryResults(typeStr);
     return builderRtr(builder);
@@ -212,8 +213,7 @@ export class ECSManager {
       return;
     }
 
-    const components = this.components.get(typeStr).filter(c => c.entityId !== entityId);
-    this.components.set(typeStr, components);
+    this.components.get(typeStr).remove(entityId);
 
     this.invalidateQueryResults(typeStr);
     return builder ?? new EntityBuilder(entityId, this);
@@ -276,7 +276,7 @@ export class ECSManager {
 
         // TODO: refactor so we don't need variable from outside scope
         //       clean so it's more readable
-        const thisResult: EntityEntry[] = components?.filter(c => !isNaN(c.entityId))
+        const thisResult: EntityEntry[] = components?.filter(c => isNumber(c.entityId) && c.entityId >= 0)
         .reduce((
           previousValues: EntityEntry[], 
           value: Component<object>, 
@@ -353,24 +353,17 @@ export class ECSManager {
   /**
    * Retrieves a component from the internal storage
    *
-   * @typeParam T  any class that implements ComponentIdentifier
+   * @typeParam T component data type
    *
    * @param compType any instance of same type as target component
-   * @param index index of the component in the internal storage
+   * @param entityId id of entity owner of component
    *
    * @return requested component or null
    */
-  public accessComponentData<T extends object>(typeStr: string, index: number): T | null {
-    if (index < 0) {
-      return null;
-    }
-
+  public accessComponentData<T extends object>(typeStr: string, entityId: number): T | undefined {
     const components = this.components.get(typeStr);
-    if (components.length <= index) {
-      return null;
-    }
 
-    return components[index].data as T;
+    return components.find(c => c.entityId === entityId)?.data as T;
   }
 
   /**
@@ -423,8 +416,8 @@ export class ECSManager {
    */
   private createArgs(entry: EntityEntry): Component<object>[] {
     const args = [];
-    for (const component of entry.components) {
-      const argComp = this.components.get(component[0])[component[1]];
+    for (const [typeStr, index] of entry.components.entries()) {
+      const argComp = this.components.get(typeStr).unsafeGet(index);
       args.push(argComp);
     }
 
@@ -434,31 +427,31 @@ export class ECSManager {
   /**
    * @ignore
    */
-  private invalidateQueryResults(changedIdentifier: string): void {
-    const isComponentInQuery = (identifier: string, node: QueryNode | QueryLeafNode | null): boolean => {
+  private invalidateQueryResults(changeTypeStr: string): void {
+    const isComponentInQuery = (typeStr: string, node: QueryNode | QueryLeafNode | null): boolean => {
       if (!node) {
         return false;
       }
 
       if (isQueryNode(node)) {
-        const leftFind = isComponentInQuery(identifier, node.leftChild);
+        const leftFind = isComponentInQuery(typeStr, node.leftChild);
         if (leftFind) {
           return true;
         }
 
-        const rightFind = isComponentInQuery(identifier, node.rightChild);
+        const rightFind = isComponentInQuery(typeStr, node.rightChild);
         if (rightFind) {
           return true;
         }
 
         return false;
       } else {
-        return node.typeStr === identifier;
+        return node.typeStr === typeStr;
       }
     };
 
     const updatedSystem = <T>(system: System<T>) => {
-      if (isComponentInQuery(changedIdentifier, system.query)) {
+      if (isComponentInQuery(changeTypeStr, system.query)) {
         return this.queryEntities(system.query);
       }
       return system.qResult;

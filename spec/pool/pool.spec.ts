@@ -78,7 +78,7 @@ describe('Pool', () => {
                 expect(comp.data).toEqual(defaultValue);
             } else {
                 expect(comp.data).not.toBe(overrideValue);
-                expect(comp.data).toEqual(defaultValue);
+                expect(comp.data).toEqual(overrideValue);
             }
 
             count += 1;

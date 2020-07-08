@@ -1,4 +1,4 @@
-import { TestCompFour, TestCompOne, TestCompThree } from "../utility";
+import { TestCompFour, TestCompOne, TestCompThree, TestCompTwo } from "../utility";
 import { Component } from "../../src/ecs/component.model";
 import { QueryToken, QueryNode } from "../../src/ecs/esc-query.model";
 import { ECSManager } from "../../src/ecs/manager";
@@ -18,14 +18,13 @@ describe('Systems', () => {
     let manager: ECSManager;
     beforeEach(() => {  
         manager = new ECSManager();
-        manager.registerComponentType(TestCompOne.identifier, new TestCompOne());
+        manager.registerComponentType(TestCompOne.identifier, new TestCompOne()); 
         manager.registerComponentType(TestCompThree.identifier, new TestCompThree());
         manager.registerComponentType(TestCompFour.identifier, new TestCompFour(0));
     });
 
     it('Should mutate component state on dispatch', () => {
-        const compFourRef = new TestCompFour(0);
-        manager.createEntity().addComponent(TestCompFour.identifier, compFourRef);
+        manager.createEntity().addComponent(TestCompFour.identifier, new TestCompFour(0));
 
         manager.registerSystemWithEscQuery(testSystem, query);
 
@@ -34,12 +33,11 @@ describe('Systems', () => {
         manager.dispatch();
         manager.dispatch();
 
-        expect(compFourRef.someState).toBe(4);
+        expect(manager.accessComponentData<TestCompFour>(TestCompFour.identifier, 0).someState).toBe(4);
     });
 
     it('Should mutate component state on event', () => {
-        const compFourRef = new TestCompFour(0);
-        manager.createEntity().addComponent(TestCompFour.identifier, compFourRef);
+        manager.createEntity().addComponent(TestCompFour.identifier);
 
         const index = manager.registerEventWithEscQuery(testSystem, query);
 
@@ -48,16 +46,15 @@ describe('Systems', () => {
         manager.onEvent(index, null);
         manager.onEvent(index, null);
 
-        expect(compFourRef.someState).toBe(4);
+        expect(manager.accessComponentData<TestCompFour>(TestCompFour.identifier, 0).someState).toBe(4);
     });
 
     it('Should delete self only after dispatch', () => {
-        const compFourRef = new TestCompFour(0);
-        manager.createEntity().addComponent(TestCompFour.identifier, compFourRef);
+        manager.createEntity().addComponent(TestCompFour.identifier);
 
-        manager.createEntity().addComponent(TestCompOne.identifier, new TestCompOne());
-        manager.createEntity().addComponent(TestCompOne.identifier, new TestCompOne());
-        manager.createEntity().addComponent(TestCompOne.identifier, new TestCompOne());
+        manager.createEntity().addComponent(TestCompOne.identifier);
+        manager.createEntity().addComponent(TestCompOne.identifier);
+        manager.createEntity().addComponent(TestCompOne.identifier);
 
         const deleteQuery: QueryNode = {
             token: QueryToken.OR,
@@ -85,14 +82,13 @@ describe('Systems', () => {
         manager.dispatch();
         manager.dispatch();
 
-        expect(compFourRef.someState).toBe(3);
+        expect(manager.accessComponentData<TestCompFour>(TestCompFour.identifier, 0).someState).toBe(3);
     });
 
     it('Should add new component only after dispatch', () => {
-        const compFourRef = new TestCompFour(0);
-        manager.createEntity().addComponent(TestCompFour.identifier, compFourRef);
+        manager.createEntity().addComponent(TestCompFour.identifier);
 
-        manager.createEntity().addComponent(TestCompOne.identifier, new TestCompOne());
+        manager.createEntity().addComponent(TestCompOne.identifier);
 
         const addQuery: QueryNode = {
             token: QueryToken.OR,
@@ -112,47 +108,44 @@ describe('Systems', () => {
 
             four.someState += 1;
 
-            manager.createEntity().addComponent(TestCompOne.identifier, new TestCompOne());
+            manager.createEntity().addComponent(TestCompFour.identifier);
         };
 
         manager.registerSystemWithEscQuery(addNewSystem, addQuery);
 
+        expect(manager.accessComponentData<TestCompFour>(TestCompFour.identifier, 2)).toBeUndefined();
         manager.dispatch();
+        expect(manager.accessComponentData<TestCompFour>(TestCompFour.identifier, 2).someState).toBe(0);
+        expect(manager.accessComponentData<TestCompFour>(TestCompFour.identifier, 3)).toBeUndefined();
         manager.dispatch();
-
-        expect(compFourRef.someState).toBe(3);
+        expect(manager.accessComponentData<TestCompFour>(TestCompFour.identifier, 3).someState).toBe(0);
     });
 
     it('Should update query result on remove', () => {
-        const compFourRef = new TestCompFour(0);
-        const entityBuilder = manager.createEntity().addComponent(TestCompFour.identifier, compFourRef);
-
-        const otherCompFourRef = new TestCompFour(0);
-        manager.createEntity().addComponent(TestCompFour.identifier, otherCompFourRef);
+        const entityBuilder = manager.createEntity().addComponent(TestCompFour.identifier);
+        manager.createEntity().addComponent(TestCompFour.identifier);
 
         manager.registerSystemWithEscQuery(testSystem, query);
 
+        manager.dispatch();
+        expect(manager.accessComponentData<TestCompFour>(TestCompFour.identifier, 0).someState).toBe(1);
+
         entityBuilder.removeComponent(TestCompFour.identifier);
-
-        manager.dispatch();
         manager.dispatch();
 
-        expect(compFourRef.someState).toBe(0);
-        expect(otherCompFourRef.someState).toBe(2);
+        expect(manager.accessComponentData<TestCompFour>(TestCompFour.identifier, 0)).toBeUndefined();
+        expect(manager.accessComponentData<TestCompFour>(TestCompFour.identifier, 1).someState).toBe(2);
     });
 
     it('Should update query result on add', () => {
-        const compFourRef = new TestCompFour(0);
-        const entityBuilder = manager.createEntity();
-
         manager.registerSystemWithEscQuery(testSystem, query);
 
-        entityBuilder.addComponent(TestCompFour.identifier, compFourRef);
+        manager.createEntity().addComponent(TestCompFour.identifier);
 
         manager.dispatch();
         manager.dispatch();
 
-        expect(compFourRef.someState).toBe(2);
+        expect(manager.accessComponentData<TestCompFour>(TestCompFour.identifier, 0).someState).toBe(2);
     });
 
     const sharedStateSystem = <T>(
@@ -163,10 +156,9 @@ describe('Systems', () => {
     };
 
     it('Should share entity between entities in system dispatch', () => {
-        const compFourRef = new TestCompFour(0);
         manager.createEntity()
-            .addComponent(TestCompFour.identifier, compFourRef)
-            .addComponent(TestCompThree.identifier, new TestCompThree());
+            .addComponent(TestCompFour.identifier)
+            .addComponent(TestCompThree.identifier);
 
         manager.createEntity().addComponent(TestCompOne.identifier, new TestCompOne());
         manager.createEntity().addComponent(TestCompOne.identifier, new TestCompOne());
@@ -194,14 +186,13 @@ describe('Systems', () => {
 
         manager.dispatch();
 
-        expect(compFourRef.someState).toBe(2, 'Shared state was not mutated');
+        expect(manager.accessComponentData<TestCompFour>(TestCompFour.identifier, 0).someState).toBe(2, 'Shared state was not mutated');
     });
 
     it('Should share entity between entities in system event with AND', () => {
-        const compFourRef = new TestCompFour(0);
         manager.createEntity()
-            .addComponent(TestCompFour.identifier, compFourRef)
-            .addComponent(TestCompThree.identifier, new TestCompThree());
+            .addComponent(TestCompFour.identifier)
+            .addComponent(TestCompThree.identifier);
 
         manager.createEntity().addComponent(TestCompOne.identifier, new TestCompOne());
         manager.createEntity().addComponent(TestCompOne.identifier, new TestCompOne());
@@ -229,17 +220,15 @@ describe('Systems', () => {
 
         manager.onEvent(index, null);
 
-        expect(compFourRef.someState).toBe(2, 'Shared state was not mutated');
+        expect(manager.accessComponentData<TestCompFour>(TestCompFour.identifier, 0).someState).toBe(2, 'Shared state was not mutated');
     });
 
     it('Should share entity between entities in system event with OR', () => {
-        const compFourRef = new TestCompFour(0);
-        manager.createEntity().addComponent(TestCompFour.identifier, compFourRef);
-        manager.createEntity().addComponent(TestCompFour.identifier, compFourRef);
-        manager.createEntity().addComponent(TestCompThree.identifier, new TestCompThree());
+        manager.createEntity().addComponent(TestCompFour.identifier);
+        manager.createEntity().addComponent(TestCompThree.identifier);
 
-        manager.createEntity().addComponent(TestCompOne.identifier, new TestCompOne());
-        manager.createEntity().addComponent(TestCompOne.identifier, new TestCompOne());
+        manager.createEntity().addComponent(TestCompOne.identifier);
+        manager.createEntity().addComponent(TestCompOne.identifier);
 
         const query: QueryNode = {
             token: QueryToken.OR,
@@ -275,6 +264,6 @@ describe('Systems', () => {
 
         manager.onEvent(index, null);
 
-        expect(compFourRef.someState).toBe(1, 'Shared state was not mutated');
+        expect(manager.accessComponentData<TestCompFour>(TestCompFour.identifier, 0).someState).toBe(1, 'Shared state was not mutated');
     });
 });

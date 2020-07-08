@@ -35,10 +35,19 @@ export class ComponentPool<T extends object> implements IterableIterator<Compone
             return;
         }
 
-        this.pool[indexOf] = this.pool[this.length];
-        this.length -= 1;
+        const removed = this.pool[indexOf];
+        const lastIndex = this.length - 1;
+
+        this.pool[indexOf] = this.pool[lastIndex];
+
+        removed.entityId = -1;
+        this.pool[lastIndex] = removed;
+
+        this.length = lastIndex;
     }
 
+    // TODO: we should not change component-pool state, we should return a wrapper
+    //       closjure/object that contains pos and so on to avoid hellish bugs
     [Symbol.iterator](): IterableIterator<Component<T>> {
         return this;
     }
@@ -64,12 +73,29 @@ export class ComponentPool<T extends object> implements IterableIterator<Compone
 
     // tslint:disable-next-line: no-any
     public find(predicate: (value: Component<T>, index: number, obj: Component<T>[]) => unknown, thisArg?: any) {
-        return this.pool.find(predicate);
+        let index = 0; // TODO: implement entries to get index in for loop
+        for (const comp of this) {
+            if (predicate(comp, index, this.pool)) { // TODO:
+                this.pos = 0; 
+                return comp;
+            }
+        }
+        return null;
     }
 
     // tslint:disable-next-line: no-any
     public filter(callbackfn: (value: Component<T>, index: number, array: Component<T>[]) => unknown, thisArg?: any): Component<T>[] {
-        return this.pool.filter(callbackfn);
+        const result: Component<T>[] = [];
+        let index = 0; // TODO: implement entries to get index in for loop
+        for (const comp of this) {
+            if (callbackfn(comp, index, this.pool)) {
+                result.push(comp);
+            }
+
+            index += 1;
+        }
+
+        return result;
     }
 
     private onExpandPool(firstExpand?: boolean): void {
@@ -104,11 +130,11 @@ export class ComponentPool<T extends object> implements IterableIterator<Compone
     }
 
     private deepClone<G>(source: G, target: G) {
-        if (!source || typeof source !== 'object') {
-            target = source;
-        }
-
         for (const key in target) {
+            if (!source[key] || typeof source[key] !== 'object') {
+                target[key] = source[key];
+            }
+
             this.deepClone(source[key], target[key]);
         }
     }
