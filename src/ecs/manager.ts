@@ -42,10 +42,10 @@ export class EntityBuilder {
   /**
    * A facade to {@link ECSManager.removeComponent}
    * @typeParam T  any class that implements ComponentIdentifier
-   * @param identifier   the type identifier for the component you want to remove
+   * @param typeStr   the type typeStrs for the component you want to remove
    */
-  public removeComponent(identifier: string): EntityBuilder {
-    return this.ecsManager.removeComponent(this.id, identifier, this) as EntityBuilder;
+  public removeComponent(typeStrs: string): EntityBuilder {
+    return this.ecsManager.removeComponent(this.id, typeStrs, this) as EntityBuilder;
   }
 }
 
@@ -116,10 +116,10 @@ export class ECSManager {
    * Register a system meant to be called manually by the callee
    *
    * @param system  A function that will read/write to components
-   * @param identifiers  A list of type identifiers
+   * @param typeStrs  A list of types as string
    */
-  public registerEvent(system: SystemFn<Event>, identifiers: string[]): void {
-    const query = createQueryFromIdentifierList(identifiers);
+  public registerEvent(system: SystemFn<Event>, typeStrs: string[]): void {
+    const query = createQueryFromIdentifierList(typeStrs);
     this.registerEventWithEscQuery(system, query);
   }
 
@@ -142,10 +142,10 @@ export class ECSManager {
    * Register a system meant to be called each frame by the manager
    *
    * @param system  A function that will read/write to components
-   * @param identifiers  A list of type identifiers
+   * @param typeStr  A list of types as string
    */
-  public registerSystem(system: SystemFn<number>, identifiers: string[]): void {
-    const query = createQueryFromIdentifierList(identifiers);
+  public registerSystem(system: SystemFn<number>, typeStr: string[]): void {
+    const query = createQueryFromIdentifierList(typeStr);
     this.registerSystemWithEscQuery(system, query);
   }
 
@@ -157,7 +157,15 @@ export class ECSManager {
     return new EntityBuilder(this.entityId - 1, this);
   }
 
-  // avoid calling this is game loop
+  /**
+   * This is the non transform version of registerComponentType
+   * You should probably call {@link registerComponentType} from the index instead
+   * 
+   * Used to preallocate storage for a given component type
+   * avoid calling this in a game loop
+   * @param typeStr the type of the component as a string 
+   * @param defaultValue 
+   */
   public registerComponentType<T extends object>(typeStr: string, defaultValue: T) {
     if (this.components.has(typeStr)) {
       return;
@@ -167,6 +175,9 @@ export class ECSManager {
   }
 
   /**
+   * This is the non transform version of addComponent
+   * You should probably call {@link addComponent} from the index instead
+   * 
    * @typeParam T  any class that implements ComponentIdentifier
    * @param entityId  id of entity that is supposed to be updated
    * @param component  a new component to be connected with given entity.
@@ -201,8 +212,11 @@ export class ECSManager {
   }
 
   /**
+   * This is the non transform version of removeComponent
+   * You should probably call {@link removeComponent} from the index instead
+   * 
    * @param entityId  id of entity that is supposed to be updated
-   * @param identifier   the type identifier for the component you want to remove
+   * @param typeStr   the type as string for the component you want to remove
    * @param builder  Used by the EntityBuilder to cache itself, can be ignored usually
    */
   public removeComponent(entityId: number, typeStr: string, builder?: EntityBuilder): EntityBuilder | void {
@@ -349,10 +363,10 @@ export class ECSManager {
     return result;
   }
 
-  // TODO: there should be an alternative one where you use entityId and identifier
   /**
-   * Retrieves a component from the internal storage
-   *
+   * This is the non transform version of accessComponentData
+   * You should probably call {@link accessComponentData} from the index instead
+   * 
    * @typeParam T component data type
    *
    * @param compType any instance of same type as target component
@@ -408,9 +422,6 @@ export class ECSManager {
     this.prevRun = now;
   }
 
-  // TODO: this probably causes GC spikes
-  //       we can cache this in the ComponentQueryResult and only create on
-  //       invalidated query
   /**
    * @ignore
    */
