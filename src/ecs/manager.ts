@@ -183,7 +183,7 @@ export class ECSManager {
 
     const components = this.components.get(typeStr);
 
-    if (components.find(c => c.entityId === entityId)) {
+    if (components?.find(c => c.entityId === entityId)) {
       return; // TODO: errorhandling
     }
 

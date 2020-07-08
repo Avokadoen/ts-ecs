@@ -9,7 +9,7 @@ This project utilizes [typescript transformers](https://github.com/madou/typescr
 
 ## In Webpack
 ```js
-const registerSystemTransformer = require('niave-ts-ecs/transformer/register-system.transformer.ts').default; // <--
+const managerEndpointsTransformer = require('niave-ts-ecs/transformer/manager-endpoints.transformer.ts').default; // <--
 
 module.exports = ['ts-loader'].map(loader => ({
    // ... omitted
@@ -21,7 +21,7 @@ module.exports = ['ts-loader'].map(loader => ({
                     // make sure not to set `transpileOnly: true` here, otherwise it will not work
                     getCustomTransformers: program => ({
                         before: [
-                            registerSystemTransformer(program)
+                            managerEndpointsTransformer(program)
                         ]
                     })
                 }
@@ -40,7 +40,7 @@ Remeber to build using `ttsc` not `tsc`
     "compilerOptions": {
         ...
         "plugins": [
-            { "transform": "./src/transformers/register-system.transformer.ts" },
+            { "transform": "./src/transformers/manager-endpoints.transformer.ts" },
         ]
     }
     ...

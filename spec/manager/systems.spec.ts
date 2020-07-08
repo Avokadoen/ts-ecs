@@ -1,4 +1,4 @@
-import { TestCompFour, TestCompOne, TestCompThree, TestCompTwo } from "../utility";
+import { TestCompFour, TestCompOne, TestCompThree } from "../utility";
 import { Component } from "../../src/ecs/component.model";
 import { QueryToken, QueryNode } from "../../src/ecs/esc-query.model";
 import { ECSManager } from "../../src/ecs/manager";

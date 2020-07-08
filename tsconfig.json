@@ -18,18 +18,19 @@
         "declarationMap": true,
         "esModuleInterop": true,
         "jsx": "react",
+        "allowJs": false,
         "plugins": [
             { "transform": "./src/transformers/manager-endpoints.transformer.ts" },
         ]
     },
     "include": [
-        "./src/**/*", 
+        "src", 
         "index.ts", 
-        "./spec/**/*"
+        "spec"
     ],
     "exclude": [
         "node_modules",
-        "dist"
+        "dist",
     ],
     "typedocOptions": {
         "inputFiles": ["./src", "index.ts"],

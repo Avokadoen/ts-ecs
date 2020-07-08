@@ -23,7 +23,7 @@ export class ComponentPool<T extends object> implements IterableIterator<Compone
         this.pool[this.length].entityId = entityId;
 
         const target = override ?? this.defaultValue;
-        this.deepClone(target, this.pool[this.length].data);
+        this.deepClone(this.pool[this.length].data, target);
 
         this.length += 1;
     }
@@ -128,13 +128,13 @@ export class ComponentPool<T extends object> implements IterableIterator<Compone
         return copy as G;
     }
 
-    private deepClone<G>(source: G, target: G) {
-        for (const key in target) {
-            if (!source[key] || typeof source[key] !== 'object') {
+    private deepClone<G>(target: G, source: G) {
+        for (const key in source) {
+            if (typeof target[key] === 'object') {
+                this.deepClone(source[key], target[key]);
+            } else {
                 target[key] = source[key];
             }
-
-            this.deepClone(source[key], target[key]);
         }
     }
 }

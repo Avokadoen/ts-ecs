@@ -1,11 +1,14 @@
-import ts, { CallExpression, isIdentifier, TypeNode, isFunctionTypeNode, isTypeReferenceNode, createLiteral, FlowNode, FlowCall, Expression, isVariableDeclaration, isArrowFunction, NodeArray, ParameterDeclaration, SyntaxKind, isCallExpression, Node, isFunctionDeclaration, isExpressionStatement, TypeChecker, isJSDocSignature, Identifier, isClassDeclaration, MethodDeclaration, sys, isCallLikeExpression, CallLikeExpression, LiteralExpression, createArrayLiteral, PrimaryExpression, ArrayLiteralExpression, StringLiteral, Declaration, SymbolFlags, TypeFlags } from 'typescript';
+import ts, { CallExpression, createLiteral, Expression, isVariableDeclaration, isArrowFunction, NodeArray, isFunctionDeclaration, isExpressionStatement, TypeChecker, isJSDocSignature, Identifier, isClassDeclaration, MethodDeclaration, createArrayLiteral, Declaration, TypeFlags, TypeNode, createNodeArray } from 'typescript';
 import path from 'path';
 
 // SOURCE: https://github.com/kimamula/ts-transformer-keys
 
+// TODO: Major refactor to clean this code please
+
 enum ActiveNodeKind {
     RegSystem, // Both normal and event
-    RegComponent
+    RegComponent,
+    AddComponent
 }
 
 interface ActiveNode {
@@ -30,6 +33,11 @@ const registerEventFn: TargetFunction = {
 
 const registerComponentFn: TargetFunction = {
     name: 'registerComponentType',
+    node: null
+};
+
+const addComponentFn: TargetFunction = {
+    name: 'addComponent',
     node: null
 };
 
@@ -79,6 +87,9 @@ function visitNodeAndChildren(node: ts.Node, program: ts.Program, context: ts.Tr
                     case registerComponentFn.name:
                         nodeAssigner(registerComponentFn, member);
                         break;
+                    case addComponentFn.name:
+                        nodeAssigner(addComponentFn, member);
+                        break;
                 }
             }
         }
@@ -122,35 +133,64 @@ function visitNode(node: ts.Node, program: ts.Program): ts.Node | undefined {
 
 
     let callArguments: NodeArray<Expression>;
-    const {valueDeclaration} = typeChecker.getSymbolAtLocation(arg);
+    let typeArguments: NodeArray<TypeNode>;
     switch (activeNode.kind) {
         case ActiveNodeKind.RegSystem:
-            const parametersTypeStrings = extractSystemParameterTypeString(valueDeclaration, typeChecker);
-            const systemCallArguments = createArrayLiteral(parametersTypeStrings.map(p => createLiteral(p)));
+            const systemDecl = typeChecker.getSymbolAtLocation(arg).valueDeclaration;
+            const parametersTypeStrings = extractSystemParameterTypeString(systemDecl, typeChecker);
             callArguments = ts.createNodeArray([
                 arg, 
-                systemCallArguments
+                createArrayLiteral(parametersTypeStrings.map(p => createLiteral(p)))
             ]);
+            typeArguments = null;
             break;
         case ActiveNodeKind.RegComponent:
+            const defaultDecl = typeChecker.getSymbolAtLocation(arg).valueDeclaration;
             let typeStr: string;
-            if (isVariableDeclaration(valueDeclaration)) {
-                const type = typeChecker.getTypeAtLocation(valueDeclaration);
+            if (isVariableDeclaration(defaultDecl)) {
+                const type = typeChecker.getTypeAtLocation(defaultDecl);
                 typeStr = typeChecker.typeToString(type);
             }
             
-            const componentCallArgumetns = createLiteral(typeStr);
             callArguments = ts.createNodeArray([
-                componentCallArgumetns,
+                createLiteral(typeStr),
                 arg
             ]);
+            typeArguments = null;
+            break;
+        case ActiveNodeKind.AddComponent:
+            let compTypeStr: string;
+            if (node.typeArguments) {
+                const typeArg = typeChecker.getTypeAtLocation(node.typeArguments[0]);
+                compTypeStr = typeChecker.typeToString(typeArg);
+                
+                callArguments = ts.createNodeArray([
+                    arg,
+                    createLiteral(compTypeStr)
+                ]);
+                typeArguments = node.typeArguments;
+            } else if (node.arguments.length > 2) {
+                const typeArg = typeChecker.getTypeAtLocation(node.arguments[2]);
+                compTypeStr = typeChecker.typeToString(typeArg);
+                
+                callArguments = ts.createNodeArray([
+                    arg,
+                    createLiteral(compTypeStr),
+                    node.arguments[2]
+                ]);
+                typeArguments = createNodeArray([
+                    typeChecker.typeToTypeNode(typeArg)
+                ]);
+            } else {
+                reportInternalError('addComponent should either have a type specifier or a override value', node);
+            }
             break;
     }
 
     return ts.updateCall(
         node, 
         properyAccess,
-        null,
+        typeArguments,
         callArguments
     );
 }
@@ -168,6 +208,8 @@ function getActiveFnNode(node: CallExpression, typeChecker: TypeChecker): Active
             return { kind: ActiveNodeKind.RegSystem, node: registerEventFn.node };
         case registerComponentFn.name:
             return { kind: ActiveNodeKind.RegComponent, node: registerComponentFn.node };
+        case addComponentFn.name:
+            return { kind: ActiveNodeKind.AddComponent, node: addComponentFn.node };
         default:
             return;
     }
@@ -241,9 +283,10 @@ function isFnParameterTypesCallExpression(node: ts.Node, typeChecker: ts.TypeChe
         && (declaration.name?.getText() === registerSystemFn.name  
         ||  declaration.name?.getText() === registerEventFn.name
         ||  declaration.name?.getText() === registerComponentFn.name
+        ||  declaration.name?.getText() === addComponentFn.name
     );
 }
 
 function reportInternalError(message: string, context: ts.Node) {
-    console.log(`ECS internal error: ${message}, context kind: ${context.kind}`);
+    throw `ECS internal error: ${message}, context kind: ${context.kind}`;
 }
