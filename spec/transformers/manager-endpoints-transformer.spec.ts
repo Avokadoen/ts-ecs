@@ -19,10 +19,10 @@ const simpleSystemType = <T>(_: T, tOne: Component<TestCompOne>, tTwo: Component
 const simpleQueryResult: QueryNode = {
     token: QueryToken.AND,
     leftChild: {
-        typeStr: 'Component<TestCompOne>'
+        typeStr: 'TestCompOne'
     },
     rightChild: {
-        typeStr: 'Component<TestCompTwo>'
+        typeStr: 'TestCompTwo'
     }
 };
 
@@ -33,7 +33,7 @@ const complexSystemType = <T>(_: T, tOne: Component<OtherClass<OtherClass<TestCo
 const complexQueryResult: QueryNode = {
     token: QueryToken.OR,
     leftChild: {
-        typeStr: 'Component<OtherClass<OtherClass<TestCompOne>>>'
+        typeStr: 'OtherClass<OtherClass<TestCompOne>>'
     },
 };
 
@@ -90,7 +90,7 @@ describe('Transformers', () => {
                 {
                     token: QueryToken.OR,
                     leftChild: {
-                        typeStr: 'Component<OtherClass<OtherClass<TestCompOne>>>'
+                        typeStr: 'OtherClass<OtherClass<TestCompOne>>'
                     },
                 }
             );
@@ -151,7 +151,6 @@ describe('Transformers', () => {
                 addComponent<Optimus>(manager, builder.entityId);
 
                 expect(manager.accessComponentData<Optimus>(builder.entityId, 'Optimus')).toBeDefined();
-            
             });
 
             it('Should add with override value', () => {

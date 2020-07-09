@@ -132,19 +132,10 @@ function visitNode(node: ts.Node, program: ts.Program): ts.Node | undefined {
     if (isFnParameterTypesImportExpression(node)) {
         return;
     }
+
     if (!isFnParameterTypesCallExpression(node, typeChecker)) {
         return node;
     }
-
-    // if (!isExpressionStatement(node.parent)) {
-    //     const { declaration } = typeChecker.getResolvedSignature(node);
-    //     // tslint:disable-next-line: no-any
-    //     if ((declaration as any).name?.getText() === accessComponentDataFn.name) {
-    //         // tslint:disable-next-line: no-any
-    //         console.log((declaration as any).name?.getText());
-    //     }
-    //     return node;
-    // }
 
     const activeNode = getActiveFnNode(node, typeChecker);
     if (!activeNode) {
@@ -301,7 +292,14 @@ function extractSystemParameterTypeString(valueDeclaration: Declaration, typeChe
             : undefined;
 
         if (typeStr) {
-            typeArray.push(typeStr);
+            const strSplit = typeStr.split('Component<');
+            console.log(strSplit);
+            
+            if (strSplit.length !== 2) {
+                reportInternalError('expect system to utilize Component<T> i.e Component<MyComponent>', p);
+            }
+
+            typeArray.push(strSplit[1].slice(0, strSplit[1].length - 1));
         }
     }
     return typeArray;
