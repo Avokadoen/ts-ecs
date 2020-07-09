@@ -34,14 +34,14 @@ describe('Component read/write', () => {
         it('Should return component on valid request', () => {
             manager.createEntity().addComponent(TestCompFour.identifier, new TestCompFour(10));
         
-            const testCompAccessed = manager.accessComponentData(TestCompFour.identifier, 0) as TestCompFour;
+            const testCompAccessed = manager.accessComponentData(0, TestCompFour.identifier) as TestCompFour;
             expect(testCompAccessed.someState).toBe(10, 'State had unexpected value!');
         });
     
         it('Should return null on invalid request', () => {
             manager.createEntity().addComponent(TestCompFour.identifier, new TestCompFour(10));
 
-            const testCompAccessed = manager.accessComponentData(TestCompFour.identifier, 999) as TestCompFour;
+            const testCompAccessed = manager.accessComponentData(999, TestCompFour.identifier) as TestCompFour;
             expect(testCompAccessed).toBeUndefined('Got component on invalid access');
         });
     });

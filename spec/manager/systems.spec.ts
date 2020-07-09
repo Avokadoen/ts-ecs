@@ -33,7 +33,7 @@ describe('Systems', () => {
         manager.dispatch();
         manager.dispatch();
 
-        expect(manager.accessComponentData<TestCompFour>(TestCompFour.identifier, 0).someState).toBe(4);
+        expect(manager.accessComponentData<TestCompFour>(0, TestCompFour.identifier).someState).toBe(4);
     });
 
     it('Should mutate component state on event', () => {
@@ -46,7 +46,7 @@ describe('Systems', () => {
         manager.onEvent(index, null);
         manager.onEvent(index, null);
 
-        expect(manager.accessComponentData<TestCompFour>(TestCompFour.identifier, 0).someState).toBe(4);
+        expect(manager.accessComponentData<TestCompFour>(0, TestCompFour.identifier).someState).toBe(4);
     });
 
     it('Should delete self only after dispatch', () => {
@@ -82,7 +82,7 @@ describe('Systems', () => {
         manager.dispatch();
         manager.dispatch();
 
-        expect(manager.accessComponentData<TestCompFour>(TestCompFour.identifier, 0).someState).toBe(3);
+        expect(manager.accessComponentData<TestCompFour>(0, TestCompFour.identifier).someState).toBe(3);
     });
 
     it('Should add new component only after dispatch', () => {
@@ -113,12 +113,12 @@ describe('Systems', () => {
 
         manager.registerSystemWithEscQuery(addNewSystem, addQuery);
 
-        expect(manager.accessComponentData<TestCompFour>(TestCompFour.identifier, 2)).toBeUndefined();
+        expect(manager.accessComponentData<TestCompFour>(2, TestCompFour.identifier)).toBeUndefined();
         manager.dispatch();
-        expect(manager.accessComponentData<TestCompFour>(TestCompFour.identifier, 2).someState).toBe(0);
-        expect(manager.accessComponentData<TestCompFour>(TestCompFour.identifier, 3)).toBeUndefined();
+        expect(manager.accessComponentData<TestCompFour>(2, TestCompFour.identifier).someState).toBe(0);
+        expect(manager.accessComponentData<TestCompFour>(3, TestCompFour.identifier)).toBeUndefined();
         manager.dispatch();
-        expect(manager.accessComponentData<TestCompFour>(TestCompFour.identifier, 3).someState).toBe(0);
+        expect(manager.accessComponentData<TestCompFour>(3, TestCompFour.identifier).someState).toBe(0);
     });
 
     it('Should update query result on remove', () => {
@@ -128,13 +128,13 @@ describe('Systems', () => {
         manager.registerSystemWithEscQuery(testSystem, query);
 
         manager.dispatch();
-        expect(manager.accessComponentData<TestCompFour>(TestCompFour.identifier, 0).someState).toBe(1);
+        expect(manager.accessComponentData<TestCompFour>(0, TestCompFour.identifier).someState).toBe(1);
 
         entityBuilder.removeComponent(TestCompFour.identifier);
         manager.dispatch();
 
-        expect(manager.accessComponentData<TestCompFour>(TestCompFour.identifier, 0)).toBeUndefined();
-        expect(manager.accessComponentData<TestCompFour>(TestCompFour.identifier, 1).someState).toBe(2);
+        expect(manager.accessComponentData<TestCompFour>(0, TestCompFour.identifier)).toBeUndefined();
+        expect(manager.accessComponentData<TestCompFour>(1, TestCompFour.identifier).someState).toBe(2);
     });
 
     it('Should update query result on add', () => {
@@ -145,7 +145,7 @@ describe('Systems', () => {
         manager.dispatch();
         manager.dispatch();
 
-        expect(manager.accessComponentData<TestCompFour>(TestCompFour.identifier, 0).someState).toBe(2);
+        expect(manager.accessComponentData<TestCompFour>(0, TestCompFour.identifier).someState).toBe(2);
     });
 
     const sharedStateSystem = <T>(
@@ -186,7 +186,7 @@ describe('Systems', () => {
 
         manager.dispatch();
 
-        expect(manager.accessComponentData<TestCompFour>(TestCompFour.identifier, 0).someState).toBe(2, 'Shared state was not mutated');
+        expect(manager.accessComponentData<TestCompFour>(0, TestCompFour.identifier).someState).toBe(2, 'Shared state was not mutated');
     });
 
     it('Should share entity between entities in system event with AND', () => {
@@ -220,7 +220,7 @@ describe('Systems', () => {
 
         manager.onEvent(index, null);
 
-        expect(manager.accessComponentData<TestCompFour>(TestCompFour.identifier, 0).someState).toBe(2, 'Shared state was not mutated');
+        expect(manager.accessComponentData<TestCompFour>(0, TestCompFour.identifier).someState).toBe(2, 'Shared state was not mutated');
     });
 
     it('Should share entity between entities in system event with OR', () => {
@@ -264,6 +264,6 @@ describe('Systems', () => {
 
         manager.onEvent(index, null);
 
-        expect(manager.accessComponentData<TestCompFour>(TestCompFour.identifier, 0).someState).toBe(1, 'Shared state was not mutated');
+        expect(manager.accessComponentData<TestCompFour>(0, TestCompFour.identifier).someState).toBe(1, 'Shared state was not mutated');
     });
 });

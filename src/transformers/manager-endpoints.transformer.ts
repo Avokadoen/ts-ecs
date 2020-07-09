@@ -4,11 +4,17 @@ import path from 'path';
 // SOURCE: https://github.com/kimamula/ts-transformer-keys
 
 // TODO: Major refactor to clean this code please
+//      - There is a lot of duplicate code between functions implementations
+//      - all TargetFunction's should be in a container to reduce the switches
+//      - a lot of hacks because i have no idea how to use the typescript API
+//      - More
 
 enum ActiveNodeKind {
     RegSystem, // Both normal and event
     RegComponent,
-    AddComponent
+    AddComponent,
+    RemComponent,
+    AccessComponent
 }
 
 interface ActiveNode {
@@ -38,6 +44,16 @@ const registerComponentFn: TargetFunction = {
 
 const addComponentFn: TargetFunction = {
     name: 'addComponent',
+    node: null
+};
+
+const removeComponentFn: TargetFunction = {
+    name: 'removeComponent',
+    node: null
+};
+
+const accessComponentDataFn: TargetFunction = {
+    name: 'accessComponentData',
     node: null
 };
 
@@ -90,6 +106,12 @@ function visitNodeAndChildren(node: ts.Node, program: ts.Program, context: ts.Tr
                     case addComponentFn.name:
                         nodeAssigner(addComponentFn, member);
                         break;
+                    case removeComponentFn.name:
+                        nodeAssigner(removeComponentFn, member);
+                        break;
+                    case accessComponentDataFn.name:
+                        nodeAssigner(accessComponentDataFn, member);
+                        break;
                 }
             }
         }
@@ -114,9 +136,15 @@ function visitNode(node: ts.Node, program: ts.Program): ts.Node | undefined {
         return node;
     }
 
-    if (!isExpressionStatement(node.parent)) {
-        return node;
-    }
+    // if (!isExpressionStatement(node.parent)) {
+    //     const { declaration } = typeChecker.getResolvedSignature(node);
+    //     // tslint:disable-next-line: no-any
+    //     if ((declaration as any).name?.getText() === accessComponentDataFn.name) {
+    //         // tslint:disable-next-line: no-any
+    //         console.log((declaration as any).name?.getText());
+    //     }
+    //     return node;
+    // }
 
     const activeNode = getActiveFnNode(node, typeChecker);
     if (!activeNode) {
@@ -134,6 +162,12 @@ function visitNode(node: ts.Node, program: ts.Program): ts.Node | undefined {
 
     let callArguments: NodeArray<Expression>;
     let typeArguments: NodeArray<TypeNode>;
+
+    const getFirstTypeArgumentAsString = (node: CallExpression) => {
+        const typeArg = typeChecker.getTypeAtLocation(node.typeArguments[0]);
+        return typeChecker.typeToString(typeArg);
+    };
+
     switch (activeNode.kind) {
         case ActiveNodeKind.RegSystem:
             const systemDecl = typeChecker.getSymbolAtLocation(arg).valueDeclaration;
@@ -159,23 +193,22 @@ function visitNode(node: ts.Node, program: ts.Program): ts.Node | undefined {
             typeArguments = null;
             break;
         case ActiveNodeKind.AddComponent:
-            let compTypeStr: string;
+            let addTypeStr: string;
             if (node.typeArguments) {
-                const typeArg = typeChecker.getTypeAtLocation(node.typeArguments[0]);
-                compTypeStr = typeChecker.typeToString(typeArg);
+                addTypeStr = getFirstTypeArgumentAsString(node);
                 
                 callArguments = ts.createNodeArray([
                     arg,
-                    createLiteral(compTypeStr)
+                    createLiteral(addTypeStr)
                 ]);
                 typeArguments = node.typeArguments;
             } else if (node.arguments.length > 2) {
                 const typeArg = typeChecker.getTypeAtLocation(node.arguments[2]);
-                compTypeStr = typeChecker.typeToString(typeArg);
+                addTypeStr = typeChecker.typeToString(typeArg);
                 
                 callArguments = ts.createNodeArray([
                     arg,
-                    createLiteral(compTypeStr),
+                    createLiteral(addTypeStr),
                     node.arguments[2]
                 ]);
                 typeArguments = createNodeArray([
@@ -184,6 +217,33 @@ function visitNode(node: ts.Node, program: ts.Program): ts.Node | undefined {
             } else {
                 reportInternalError('addComponent should either have a type specifier or a override value', node);
             }
+            break;
+        case ActiveNodeKind.RemComponent:
+            if (!node.typeArguments) {
+                reportInternalError('addComponent should either have a type specifier or a override value', node);
+            }
+
+            typeArguments = node.typeArguments;
+            const removeTypeStr = getFirstTypeArgumentAsString(node);
+            callArguments = ts.createNodeArray([
+                arg,
+                createLiteral(removeTypeStr),
+            ]);
+            break;
+        case ActiveNodeKind.AccessComponent:
+            if (!node.typeArguments) {
+                reportInternalError('accessComponentData should either have a type specifier (generic)', node);
+            }
+
+            typeArguments = node.typeArguments;
+            const accessTypeStr = getFirstTypeArgumentAsString(node);
+            callArguments = ts.createNodeArray([
+                arg,
+                createLiteral(accessTypeStr),
+            ]);
+            break;
+        default:
+            reportInternalError(`unexpected activeNode kind: ${activeNode.kind}`, node);
             break;
     }
 
@@ -210,6 +270,10 @@ function getActiveFnNode(node: CallExpression, typeChecker: TypeChecker): Active
             return { kind: ActiveNodeKind.RegComponent, node: registerComponentFn.node };
         case addComponentFn.name:
             return { kind: ActiveNodeKind.AddComponent, node: addComponentFn.node };
+        case removeComponentFn.name:
+            return { kind: ActiveNodeKind.RemComponent, node: removeComponentFn.node };
+        case accessComponentDataFn.name:
+            return { kind: ActiveNodeKind.AccessComponent, node: accessComponentDataFn.node };
         default:
             return;
     }
@@ -284,6 +348,8 @@ function isFnParameterTypesCallExpression(node: ts.Node, typeChecker: ts.TypeChe
         ||  declaration.name?.getText() === registerEventFn.name
         ||  declaration.name?.getText() === registerComponentFn.name
         ||  declaration.name?.getText() === addComponentFn.name
+        ||  declaration.name?.getText() === removeComponentFn.name
+        ||  declaration.name?.getText() === accessComponentDataFn.name
     );
 }
 

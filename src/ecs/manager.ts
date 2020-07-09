@@ -123,7 +123,6 @@ export class ECSManager {
     this.registerEventWithEscQuery(system, query);
   }
 
-
   /**
    * Register a system meant to be called each frame by the manager
    *
@@ -374,10 +373,10 @@ export class ECSManager {
    *
    * @return requested component or null
    */
-  public accessComponentData<T extends object>(typeStr: string, entityId: number): T | undefined {
+  public accessComponentData<T extends object>(entityId: number, typeStr: string): T | undefined {
     const components = this.components.get(typeStr);
 
-    return components.find(c => c.entityId === entityId)?.data as T;
+    return components?.find(c => c.entityId === entityId)?.data as T;
   }
 
   /**

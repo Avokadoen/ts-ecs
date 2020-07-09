@@ -1,9 +1,11 @@
 import { ECSManager } from "../../src/ecs/manager";
-import { registerSystem, System, registerEvent, registerComponentType, addComponent } from "../../index";
+import { registerSystem, System, registerEvent, registerComponentType, addComponent, removeComponent, accessComponentData } from "../../index";
 import { TestCompTwo, TestCompOne } from "../utility";
 import { Component } from "../../src/ecs/component.model";
 import { QueryToken, QueryNode } from "../../src/ecs/esc-query.model";
 import { ComponentPool } from "../../src/pool/component-pool";
+
+// TODO: find a way to test compile errors
 
 class OtherClass<T extends object> {
     identifier: () => 'OtherClass';
@@ -100,6 +102,13 @@ describe('Transformers', () => {
             name: string;
         }
         const defaultValue: Optimus = { name: 'Prime' };
+            
+        class Prime<T> {
+            constructor(public transformThis: T) {
+
+            }
+        }
+        const complexDefaultValue = new Prime(defaultValue); 
 
         describe('Register component type', () => {
         
@@ -119,14 +128,6 @@ describe('Transformers', () => {
             it('Transform nested generic', () => {
                 const manager = new ECSManager();
     
-                class Prime<T> {
-                    constructor(public transformThis: T) {
-    
-                    }
-                }
-        
-                const complexDefaultValue = new Prime(defaultValue); 
-    
                 registerComponentType(manager, complexDefaultValue);
     
                 // tslint:disable-next-line: no-any
@@ -145,11 +146,11 @@ describe('Transformers', () => {
                 const manager = new ECSManager();
                 manager.registerComponentType('Optimus', defaultValue);
 
-                const entityB = manager.createEntity();
+                const builder = manager.createEntity();
 
-                addComponent<Optimus>(manager, entityB.entityId);
+                addComponent<Optimus>(manager, builder.entityId);
 
-                expect(manager.accessComponentData<Optimus>('Optimus', entityB.entityId)).toBeDefined();
+                expect(manager.accessComponentData<Optimus>(builder.entityId, 'Optimus')).toBeDefined();
             
             });
 
@@ -157,15 +158,65 @@ describe('Transformers', () => {
                 const manager = new ECSManager();
                 manager.registerComponentType('Optimus', defaultValue);
 
-                const entityB = manager.createEntity();
+                const builder = manager.createEntity();
                 const overrideValue: Optimus = {
                     name: 'Sam'
                 };
 
-                addComponent(manager, entityB.entityId, overrideValue);
+                addComponent(manager, builder.entityId, overrideValue);
 
-                expect(manager.accessComponentData<Optimus>('Optimus', entityB.entityId).name).toBe('Sam');
+                expect(manager.accessComponentData<Optimus>(builder.entityId, 'Optimus').name).toBe('Sam');
             });
+        });
+
+        describe('Remove component', () => {
+
+            it('Should remove simple type', () => {
+                const manager = new ECSManager();
+                manager.registerComponentType('Optimus', defaultValue);
+                const builder = manager.createEntity();
+
+                manager.addComponent(builder.entityId, 'Optimus');
+                expect(manager.accessComponentData<Optimus>(builder.entityId, 'Optimus')).toBeDefined();
+
+                removeComponent<Optimus>(manager, builder.entityId);
+
+                expect(manager.accessComponentData<Optimus>(builder.entityId, 'Optimus')).toBeUndefined();
+            });
+
+            it('Should remove generic type', () => {
+                const manager = new ECSManager();
+                manager.registerComponentType('Prime<Optimus>', complexDefaultValue);
+                const builder = manager.createEntity();
+
+                manager.addComponent(builder.entityId, 'Prime<Optimus>');
+                expect(manager.accessComponentData<Prime<Optimus>>(builder.entityId, 'Prime<Optimus>')).toBeDefined();
+
+                removeComponent<Prime<Optimus>>(manager, builder.entityId);
+
+                expect(manager.accessComponentData<Prime<Optimus>>(builder.entityId, 'Prime<Optimus>')).toBeUndefined();
+            });
+        });
+
+        describe('Access component data', () => {
+            it('Should access simple type', () => {
+                const manager = new ECSManager();
+                manager.registerComponentType('Optimus', defaultValue);
+                const builder = manager.createEntity();
+                manager.addComponent(builder.entityId, 'Optimus');
+
+                expect(accessComponentData<Optimus>(manager, builder.entityId)).toBeDefined();
+            });
+    
+            it('Should access generic type', () => {
+                const manager = new ECSManager();
+                manager.registerComponentType('Prime<Optimus>', complexDefaultValue);
+                const builder = manager.createEntity();
+                manager.addComponent(builder.entityId, 'Prime<Optimus>');
+
+                expect(accessComponentData<Prime<Optimus>>(manager, builder.entityId)).toBeDefined();
+            });
+    
         });
     });
 });
