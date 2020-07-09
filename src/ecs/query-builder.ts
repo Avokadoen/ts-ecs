@@ -7,6 +7,7 @@ enum StateChange {
 
 // TODO: this seems like it should be a state machine
 // TODO: we should just write a text parser instead of using the builder
+// TODO: support NOT
 // Currently a terrible mess of if's. Should refactor asap
 export function createQueryFromIdentifierList(identifiers: string[]): QueryNode {
     let sharedSet = false;

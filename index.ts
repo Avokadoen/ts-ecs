@@ -5,9 +5,11 @@ export * from './src/ecs/component.model';
 export * from './src/ecs/entity.model';
 export * from './src/ecs/esc-query.model';
 export * from './src/ecs/system.model';
+export * from './src/ecs/query-builder';
+export * from './src/ecs/manager';
+
 export * from './src/observer/dispatch-subject'; 
 
-export * from './src/ecs/manager';
 
 /**
  * A semi typesafe wrapper to manager's {@link ECSManager.registerSystem}
@@ -23,7 +25,7 @@ export declare function registerSystem(manager: ECSManager, system: SystemFn<num
  * @param manager manager to register to
  * @param system event you want to register
  */
-export declare function registerEvent(manager: ECSManager, system: SystemFn<Event>): void;
+export declare function registerEvent(manager: ECSManager, system: SystemFn<Event>): number;
 
 /**
  * A semi typesafe wrapper to manager's {@link ECSManager.registerComponentType}

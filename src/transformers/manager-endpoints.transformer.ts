@@ -60,12 +60,14 @@ const accessComponentDataFn: TargetFunction = {
 const managerName = 'ECSManager';
 
 export default function transformer(program: ts.Program): ts.TransformerFactory<ts.SourceFile> {
+    console.log('ECS compiling functions');
     return (context: ts.TransformationContext) => (file: ts.SourceFile) => visitNodeAndChildren(file, program, context);
 }
 
 function visitNodeAndChildren(node: ts.SourceFile, program: ts.Program, context: ts.TransformationContext): ts.SourceFile;
 function visitNodeAndChildren(node: ts.Node, program: ts.Program, context: ts.TransformationContext): ts.Node | undefined;
 function visitNodeAndChildren(node: ts.Node, program: ts.Program, context: ts.TransformationContext): ts.Node | undefined {
+    
     const managerClassDeclFinder = (node: ts.Node): ts.Node => {
         const nodeAssigner = (target: TargetFunction, member: MethodDeclaration) => {
             if (target.node) {
@@ -293,7 +295,6 @@ function extractSystemParameterTypeString(valueDeclaration: Declaration, typeChe
 
         if (typeStr) {
             const strSplit = typeStr.split('Component<');
-            console.log(strSplit);
             
             if (strSplit.length !== 2) {
                 reportInternalError('expect system to utilize Component<T> i.e Component<MyComponent>', p);
