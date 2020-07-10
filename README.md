@@ -9,7 +9,7 @@ This project utilizes [typescript transformers](https://github.com/madou/typescr
 
 ## In Webpack
 ```js
-const managerEndpointsTransformer = require('naive-ts-ecs/dist/src/transformers/manager-endpoints.transformer').default; // <--
+const managerEndpointsTransformer = require('naive-ts-ecs/manager-endpoints.transformer').default; // <--
 
 module.exports = ['ts-loader'].map(loader => ({
    // ... omitted
@@ -40,7 +40,7 @@ Remeber to build using `ttsc` not `tsc`
     "compilerOptions": {
         ...
         "plugins": [
-            { "transform": "naive-ts-ecs/src/transformers/manager-endpoints.transformer.ts" },
+            { "transform": "naive-ts-ecs/manager-endpoints.transformer" },
         ]
     }
     ...

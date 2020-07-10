@@ -20,13 +20,14 @@
         "jsx": "react",
         "allowJs": false,
         "plugins": [
-            { "transform": "./src/transformers/manager-endpoints.transformer.ts" },
+            { "transform": "./manager-endpoints.transformer.ts" },
         ]
     },
     "include": [
-        "src", 
+        "manager-endpoints.transformer.ts",
         "index.ts", 
-        "spec"
+        "src", 
+        "spec",
     ],
     "exclude": [
         "node_modules",
