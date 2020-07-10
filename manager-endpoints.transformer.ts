@@ -1,5 +1,6 @@
-import ts, { CallExpression, createLiteral, Expression, isVariableDeclaration, isArrowFunction, NodeArray, isFunctionDeclaration, isExpressionStatement, TypeChecker, isJSDocSignature, Identifier, isClassDeclaration, MethodDeclaration, createArrayLiteral, Declaration, TypeFlags, TypeNode, createNodeArray } from 'typescript';
+import ts, { CallExpression, createLiteral, Expression, isVariableDeclaration, isArrowFunction, NodeArray, isFunctionDeclaration, isExpressionStatement, TypeChecker, isJSDocSignature, Identifier, isClassDeclaration, MethodDeclaration, createArrayLiteral, Declaration, TypeFlags, TypeNode, createNodeArray, isNewExpression, isClassExpression, SymbolTable, isMethodDeclaration, isIdentifier, ArrowFunction, VariableDeclaration } from 'typescript';
 import path from 'path';
+import { Type } from 'typedoc/dist/lib/models';
 
 // SOURCE: https://github.com/kimamula/ts-transformer-keys
 
@@ -7,7 +8,7 @@ import path from 'path';
 //      - There is a lot of duplicate code between functions implementations
 //      - all TargetFunction's should be in a container to reduce the switches
 //      - a lot of hacks because i have no idea how to use the typescript API
-//      - More
+//      - Use state machine pattern to reduce ifs
 
 enum ActiveNodeKind {
     RegSystem, // Both normal and event
@@ -24,39 +25,40 @@ interface ActiveNode {
 
 interface TargetFunction {
     name: string;
-    node: Identifier;
+    node: Identifier | undefined;
 }
 
 const registerSystemFn: TargetFunction = {
     name: 'registerSystem',
-    node: null
+    node: undefined
 };
 
 const registerEventFn: TargetFunction = {
     name: 'registerEvent',
-    node: null
+    node: undefined
 };
 
 const registerComponentFn: TargetFunction = {
     name: 'registerComponentType',
-    node: null
+    node: undefined
 };
 
 const addComponentFn: TargetFunction = {
     name: 'addComponent',
-    node: null
+    node: undefined
 };
 
 const removeComponentFn: TargetFunction = {
     name: 'removeComponent',
-    node: null
+    node: undefined
 };
 
 const accessComponentDataFn: TargetFunction = {
     name: 'accessComponentData',
-    node: null
+    node: undefined
 };
 
+let fnDefinedCount = 0;
 const managerName = 'ECSManager';
 
 export default function transformer(program: ts.Program): ts.TransformerFactory<ts.SourceFile> {
@@ -67,62 +69,6 @@ export default function transformer(program: ts.Program): ts.TransformerFactory<
 function visitNodeAndChildren(node: ts.SourceFile, program: ts.Program, context: ts.TransformationContext): ts.SourceFile;
 function visitNodeAndChildren(node: ts.Node, program: ts.Program, context: ts.TransformationContext): ts.Node | undefined;
 function visitNodeAndChildren(node: ts.Node, program: ts.Program, context: ts.TransformationContext): ts.Node | undefined {
-    
-    const managerClassDeclFinder = (node: ts.Node): ts.Node => {
-        const nodeAssigner = (target: TargetFunction, member: MethodDeclaration) => {
-            if (target.node) {
-                return;
-            }
-
-            if (ts.isIdentifier(member.name)) {
-                target.node = member.name;
-            } else {
-                reportInternalError(`${target.name}: member was not an identifier`, member);
-            } 
-        };
-
-        if (registerSystemFn.node && registerEventFn.node) {
-            return node;
-        }
-
-        if (isClassDeclaration(node) && node.name.getText() === managerName) {
-            for (const member of node.members) {
-                if (!member) {
-                    continue;
-                }
-                
-                if (!ts.isMethodDeclaration(member)) {
-                    continue;
-                }
-
-                switch (member.name.getText()) {
-                    case registerSystemFn.name:
-                        nodeAssigner(registerSystemFn, member);
-                        break;
-                    case registerEventFn.name:
-                        nodeAssigner(registerEventFn, member);
-                        break;
-                    case registerComponentFn.name:
-                        nodeAssigner(registerComponentFn, member);
-                        break;
-                    case addComponentFn.name:
-                        nodeAssigner(addComponentFn, member);
-                        break;
-                    case removeComponentFn.name:
-                        nodeAssigner(removeComponentFn, member);
-                        break;
-                    case accessComponentDataFn.name:
-                        nodeAssigner(accessComponentDataFn, member);
-                        break;
-                }
-            }
-        }
-
-        return ts.visitEachChild(node, managerClassDeclFinder, context);
-    };
-    
-    ts.visitEachChild(node, managerClassDeclFinder, context);
-
     return ts.visitEachChild(visitNode(node, program), childNode => visitNodeAndChildren(childNode, program, context), context);
 }
 
@@ -143,7 +89,7 @@ function visitNode(node: ts.Node, program: ts.Program): ts.Node | undefined {
     if (!activeNode) {
         return node;
     }
-    
+
     const manager = node.arguments[0];
     const arg = node.arguments[1];
 
@@ -154,17 +100,31 @@ function visitNode(node: ts.Node, program: ts.Program): ts.Node | undefined {
 
 
     let callArguments: NodeArray<Expression>;
-    let typeArguments: NodeArray<TypeNode>;
+    let typeArguments: NodeArray<TypeNode> | undefined;
 
-    const getFirstTypeArgumentAsString = (node: CallExpression) => {
-        const typeArg = typeChecker.getTypeAtLocation(node.typeArguments[0]);
+    const getFirstTypeArgumentAsString = (callExpr: CallExpression): string | undefined => {
+        if (!callExpr.typeArguments) {
+            return;
+        }
+
+        const typeArg = typeChecker.getTypeAtLocation(callExpr.typeArguments[0]);
         return typeChecker.typeToString(typeArg);
     };
 
     switch (activeNode.kind) {
         case ActiveNodeKind.RegSystem:
-            const systemDecl = typeChecker.getSymbolAtLocation(arg).valueDeclaration;
-            const parametersTypeStrings = extractSystemParameterTypeString(systemDecl, typeChecker);
+            let parametersTypeStrings: string[];
+            if (isArrowFunction(arg)) {
+                parametersTypeStrings = extractArrowFunctionTypeString(arg, typeChecker);
+            } else {
+                const systemSymbol = typeChecker.getSymbolAtLocation(arg) ;
+                const systemDecl = systemSymbol?.valueDeclaration;
+                if (!systemDecl) {
+                    reportInternalError('failed to find system declaration', arg);
+                }
+                parametersTypeStrings = extractSystemParameterTypeString(systemDecl, typeChecker);
+            }
+        
             callArguments = ts.createNodeArray([
                 arg, 
                 createArrayLiteral(parametersTypeStrings.map(p => createLiteral(p)))
@@ -172,7 +132,7 @@ function visitNode(node: ts.Node, program: ts.Program): ts.Node | undefined {
             typeArguments = node.typeArguments;
             break;
         case ActiveNodeKind.RegComponent:
-            let typeStr: string;
+            let typeStr: string | undefined;
             if (node.typeArguments) {
                 typeStr = getFirstTypeArgumentAsString(node);
                 typeArguments = node.typeArguments;
@@ -190,7 +150,7 @@ function visitNode(node: ts.Node, program: ts.Program): ts.Node | undefined {
                     );
                 }
             }
-            console.log(node.pos);
+
             callArguments = ts.createNodeArray([
                 createLiteral(typeStr),
                 arg
@@ -198,7 +158,32 @@ function visitNode(node: ts.Node, program: ts.Program): ts.Node | undefined {
             break;
         case ActiveNodeKind.AddComponent:
             let addTypeStr: string;
-            if (node.typeArguments) {
+            if (node.arguments.length > 2) {
+                let typeArg: ts.Type;
+                if (node.typeArguments) {
+                    typeArg = typeChecker.getTypeAtLocation(node.typeArguments[0]);
+                    addTypeStr = getFirstTypeArgumentAsString(node);
+                } else {
+                    typeArg = typeChecker.getTypeAtLocation(node.arguments[2]);
+                    addTypeStr = typeChecker.typeToString(typeArg);
+                }
+
+                if (!addTypeStr) {
+                    reportInternalError('unable to infer type of addComponent\n\
+                    try to specify type with type argument or send a typed object instead', node);
+                }
+
+                callArguments = ts.createNodeArray([
+                    arg,
+                    createLiteral(addTypeStr),
+                    node.arguments[2]
+                ]);
+
+                const typeNode = typeChecker.typeToTypeNode(typeArg);
+                typeArguments = createNodeArray([
+                    typeNode
+                ]);
+            } else if (node.typeArguments) {
                 addTypeStr = getFirstTypeArgumentAsString(node);
                 
                 callArguments = ts.createNodeArray([
@@ -206,18 +191,6 @@ function visitNode(node: ts.Node, program: ts.Program): ts.Node | undefined {
                     createLiteral(addTypeStr)
                 ]);
                 typeArguments = node.typeArguments;
-            } else if (node.arguments.length > 2) {
-                const typeArg = typeChecker.getTypeAtLocation(node.arguments[2]);
-                addTypeStr = typeChecker.typeToString(typeArg);
-                
-                callArguments = ts.createNodeArray([
-                    arg,
-                    createLiteral(addTypeStr),
-                    node.arguments[2]
-                ]);
-                typeArguments = createNodeArray([
-                    typeChecker.typeToTypeNode(typeArg)
-                ]);
             } else {
                 reportInternalError('addComponent should either have a type specifier or a override value', node);
             }
@@ -248,7 +221,6 @@ function visitNode(node: ts.Node, program: ts.Program): ts.Node | undefined {
             break;
         default:
             reportInternalError(`unexpected activeNode kind: ${activeNode.kind}`, node);
-            break;
     }
 
     return ts.updateCall(
@@ -260,40 +232,65 @@ function visitNode(node: ts.Node, program: ts.Program): ts.Node | undefined {
 }
 
 function getActiveFnNode(node: CallExpression, typeChecker: TypeChecker): ActiveNode | undefined {
-    const { declaration } = typeChecker.getResolvedSignature(node);
+    const declaration = typeChecker.getResolvedSignature(node)?.declaration;
+    if (!declaration) {
+        return;
+    }
+
     if (!isFunctionDeclaration(declaration)) {
         return;
     }
 
+    const manager = node.arguments[0];
+    const managerType = typeChecker.getTypeAtLocation(manager);
+    if (typeChecker.typeToString(managerType) !== managerName) {
+        return;
+    }
+
+    const managerMembers = managerType.getSymbol().members; 
+
+    const extractFnNode = (target: TargetFunction): void | never => {
+        if (target.node) {
+            return;
+        }
+
+        const vDecl = managerMembers.get(target.name as ts.__String).valueDeclaration;
+        if (!isMethodDeclaration(vDecl)) {
+            reportInternalError(`expected ${target.name} to be assigned`, manager);
+        }
+
+        if (!isIdentifier(vDecl.name)) {
+            reportInternalError(`expected value declaration name to be identifier`, vDecl.name);
+        }
+
+        target.node = vDecl.name;
+    };
+
     switch (declaration.name?.getText()) {
         case registerSystemFn.name: 
+            extractFnNode(registerSystemFn);
             return { kind: ActiveNodeKind.RegSystem, node: registerSystemFn.node };
         case registerEventFn.name: 
+            extractFnNode(registerEventFn);
             return { kind: ActiveNodeKind.RegSystem, node: registerEventFn.node };
         case registerComponentFn.name:
+            extractFnNode(registerComponentFn);
             return { kind: ActiveNodeKind.RegComponent, node: registerComponentFn.node };
         case addComponentFn.name:
+            extractFnNode(addComponentFn);
             return { kind: ActiveNodeKind.AddComponent, node: addComponentFn.node };
         case removeComponentFn.name:
+            extractFnNode(removeComponentFn);
             return { kind: ActiveNodeKind.RemComponent, node: removeComponentFn.node };
         case accessComponentDataFn.name:
+            extractFnNode(accessComponentDataFn);
             return { kind: ActiveNodeKind.AccessComponent, node: accessComponentDataFn.node };
         default:
             return;
     }
 }
 
-function extractSystemParameterTypeString(valueDeclaration: Declaration, typeChecker: TypeChecker): string[] {
-    if (!isVariableDeclaration(valueDeclaration)) {
-        reportInternalError('expected valueDeclaration to be of type variable declatation', valueDeclaration);
-        return [];
-    }
-
-    const arrowFunction = valueDeclaration.initializer;
-    if (!isArrowFunction(arrowFunction)) {
-        reportInternalError('expected initializer to be a variable declaration', arrowFunction);
-        return [];
-    }
+function extractArrowFunctionTypeString(arrowFunction: ArrowFunction, typeChecker: TypeChecker): string[] {
 
     let typeArray: string[] = [];
     for (const p of arrowFunction.parameters) {
@@ -304,7 +301,7 @@ function extractSystemParameterTypeString(valueDeclaration: Declaration, typeChe
             ? typeChecker.typeToString(type)
             : undefined;
 
-        if (typeStr) {
+        if (typeStr && typeStr !== 'Event') {
             const strSplit = typeStr.split('Component<');
             
             if (strSplit.length !== 2) {
@@ -315,6 +312,23 @@ function extractSystemParameterTypeString(valueDeclaration: Declaration, typeChe
         }
     }
     return typeArray;
+}
+
+function extractSystemParameterTypeString(valueDeclaration: Declaration, typeChecker: TypeChecker): string[] {
+    if (!isVariableDeclaration(valueDeclaration)) {
+        reportInternalError('expected valueDeclaration to be of type variable declaration', valueDeclaration);
+    }
+
+    const arrowFunction = valueDeclaration.initializer;
+    if (!arrowFunction) {
+        reportInternalError('expected initializer to exist', valueDeclaration);
+    }
+
+    if (!isArrowFunction(arrowFunction)) {
+        reportInternalError('expected initializer to be a arrow function declaration', arrowFunction);
+    }
+
+    return extractArrowFunctionTypeString(arrowFunction, typeChecker);
 }
 
 const indexJs = path.join(__dirname, 'index.js');
@@ -334,8 +348,8 @@ function isFnParameterTypesImportExpression(node: ts.Node): node is ts.ImportDec
     }
 }
 
-const indexTs = path.join(__dirname, 'index.ts'); // TODO: if dev
-const indexDTs = path.join(__dirname, 'index.d.ts'); // TODO if prod
+const indexTs = path.join(__dirname.replace('dist', 'index.ts'), ); // TODO: if dev
+const indexDTs = path.join(__dirname, 'index.d.ts');                // TODO if prod
 function isFnParameterTypesCallExpression(node: ts.Node, typeChecker: ts.TypeChecker): node is ts.CallExpression {
     if (!ts.isCallExpression(node)) {
         return false;
@@ -366,6 +380,6 @@ function isFnParameterTypesCallExpression(node: ts.Node, typeChecker: ts.TypeChe
     );
 }
 
-function reportInternalError(message: string, context: ts.Node) {
-    throw `ECS internal error: ${message}, context kind: ${context.kind}`;
+function reportInternalError(message: string, context: ts.Node): never {
+    throw `ECS internal error: ${message}, context kind: ${context.kind}, position: ${context.pos}`;
 }

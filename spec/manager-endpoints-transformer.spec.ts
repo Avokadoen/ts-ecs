@@ -1,9 +1,9 @@
-import { ECSManager } from "../../src/ecs/manager";
-import { registerSystem, System, registerEvent, registerComponentType, addComponent, removeComponent, accessComponentData } from "../../index";
-import { TestCompTwo, TestCompOne } from "../utility";
-import { Component } from "../../src/ecs/component.model";
-import { QueryToken, QueryNode } from "../../src/ecs/esc-query.model";
-import { ComponentPool } from "../../src/pool/component-pool";
+import { ECSManager } from "../src/ecs/manager";
+import { registerSystem, System, registerEvent, registerComponentType, addComponent, removeComponent, accessComponentData } from "../index";
+import { TestCompTwo, TestCompOne } from "./utility";
+import { Component } from "../src/ecs/component.model";
+import { QueryToken, QueryNode } from "../src/ecs/esc-query.model";
+import { ComponentPool } from "../src/pool/component-pool";
 
 // TODO: find a way to test compile errors
 
@@ -68,11 +68,25 @@ describe('Transformers', () => {
         it('Transform call to valid register call', () => {
             const manager = new ECSManager();
     
-            registerEvent(manager, simpleSystemType);
+            const id = registerEvent(manager, simpleSystemType);
     
             // tslint:disable-next-line: no-any
             const events:  System<Event>[] = (manager as any).events;
     
+            expect(id).toBeDefined();
+            expect(events.length).toBe(1);
+            expect(events[0].query).toEqual(simpleQueryResult);
+        });
+
+        it('Transform system with Event type', () => {
+            const manager = new ECSManager();
+    
+            const id = registerEvent(manager, (e: Event, tOne: Component<TestCompOne>, tTwo: Component<TestCompTwo>) => { });
+    
+            // tslint:disable-next-line: no-any
+            const events:  System<number>[] = (manager as any).events;
+    
+            expect(id).toBeDefined();
             expect(events.length).toBe(1);
             expect(events[0].query).toEqual(simpleQueryResult);
         });
@@ -80,11 +94,12 @@ describe('Transformers', () => {
         it('Transform nested generic', () => {
             const manager = new ECSManager();
     
-            registerEvent(manager, complexSystemType);
+            const id = registerEvent(manager, complexSystemType);
     
             // tslint:disable-next-line: no-any
             const events:  System<number>[] = (manager as any).events;
     
+            expect(id).toBeDefined();
             expect(events.length).toBe(1);
             expect(events[0].query).toEqual(
                 {
@@ -153,7 +168,7 @@ describe('Transformers', () => {
                 expect(manager.accessComponentData<Optimus>(builder.entityId, 'Optimus')).toBeDefined();
             });
 
-            it('Should add with override value', () => {
+            it('Should add with override value 1', () => {
                 const manager = new ECSManager();
                 manager.registerComponentType('Optimus', defaultValue);
 
@@ -163,6 +178,19 @@ describe('Transformers', () => {
                 };
 
                 addComponent(manager, builder.entityId, overrideValue);
+
+                expect(manager.accessComponentData<Optimus>(builder.entityId, 'Optimus').name).toBe('Sam');
+            });
+
+            it('Should add with override value 2', () => {
+                const manager = new ECSManager();
+                manager.registerComponentType('Optimus', defaultValue);
+
+                const builder = manager.createEntity();
+
+                addComponent<Optimus>(manager, builder.entityId, {
+                    name: 'Sam'
+                });
 
                 expect(manager.accessComponentData<Optimus>(builder.entityId, 'Optimus').name).toBe('Sam');
             });

@@ -1,5 +1,5 @@
 import { ComponentPool } from "../../src/pool/component-pool";
-import { TestCompOne } from "../utility";
+import { TestCompOne, TestCompFour } from "../utility";
 
 describe('Pool', () => {
 
@@ -56,18 +56,18 @@ describe('Pool', () => {
 
     it('Should deep copy and clone', () => {
         interface MyComp {
-            someData: number;
+            someData: TestCompFour;
         }
 
         const defaultValue: MyComp = {
-            someData: 1
+            someData: new TestCompFour(1)
         };
         const pool = new ComponentPool(defaultValue);
 
         pool.add(1);
 
         const overrideValue: MyComp = {
-            someData: 42
+            someData: new TestCompFour(42)
         };
         pool.add(2, overrideValue);
 

@@ -2,6 +2,7 @@ import { TestCompFour, TestCompOne, TestCompThree } from "../utility";
 import { Component } from "../../src/ecs/component.model";
 import { QueryToken, QueryNode } from "../../src/ecs/esc-query.model";
 import { ECSManager } from "../../src/ecs/manager";
+import { SystemFn } from "../../src/ecs/system.model";
 
 describe('Systems', () => {
     const testSystem = <T>(_: T, testCompFour: Component<TestCompFour>) => {
@@ -265,5 +266,41 @@ describe('Systems', () => {
         manager.onEvent(index, null);
 
         expect(manager.accessComponentData<TestCompFour>(0, TestCompFour.identifier).someState).toBe(1, 'Shared state was not mutated');
+    });
+
+    it('Should unwrap argument in correct order', () => {
+        interface C1 {
+            myNumber: number;
+        }
+
+        interface C2 {
+            myStr: string;
+        }
+
+        interface C3 {
+            otherStr: string;
+        }
+
+        const typesStrs = ['C2', 'C1', 'C3'];
+
+        manager.registerComponentType('C1', { myNumber: 1} as C1 );
+        manager.registerComponentType('C2', { myStr: 'hello'} as C2);
+        manager.registerComponentType('C3', { otherStr: 'ayyo'} as C3 );
+
+        manager.createEntity()
+            .addComponent(typesStrs[0])
+            .addComponent(typesStrs[1])
+            .addComponent(typesStrs[2]);
+
+        const systemC = <T>(_: T, c2: Component<C2>,  c1: Component<C1>, c3: Component<C3>) => {
+            expect(c1.data.myNumber).toBe(1);
+            expect(c2.data.myStr).toBe('hello');
+            expect(c3.data.otherStr).toBe('ayyo');
+        };
+
+        manager.registerSystem(systemC, typesStrs);
+        manager.dispatch();
+        const id = manager.registerEvent(systemC, typesStrs);
+        manager.onEvent(id, undefined);
     });
 });

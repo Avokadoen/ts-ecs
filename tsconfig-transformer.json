@@ -1,0 +1,17 @@
+{
+    "compilerOptions": {
+      "target": "es5",
+      "module": "commonjs",
+      "noEmitOnError": true,
+      "noFallthroughCasesInSwitch": true,
+      "esModuleInterop": true,
+      "outDir": "dist",
+    },
+    "include": [
+        "manager-endpoints.transformer.ts",
+    ],
+    "exclude": [
+        "node_modules",
+        "dist"
+    ]
+  }

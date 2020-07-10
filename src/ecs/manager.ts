@@ -118,9 +118,9 @@ export class ECSManager {
    * @param system  A function that will read/write to components
    * @param typeStrs  A list of types as string
    */
-  public registerEvent(system: SystemFn<Event>, typeStrs: string[]): void {
+  public registerEvent(system: SystemFn<Event>, typeStrs: string[]): number {
     const query = createQueryFromIdentifierList(typeStrs);
-    this.registerEventWithEscQuery(system, query);
+    return this.registerEventWithEscQuery(system, query);
   }
 
   /**
@@ -239,18 +239,20 @@ export class ECSManager {
    * will be shared each iteration
    */
   public queryEntities(query: EscQuery): EntityQueryResult {
-    const andFn = (thisResult: EntityEntry[], values: EntityEntry[]): EntityEntry[] => {
-      const least = (thisResult.length < values.length) ? thisResult : values;
-      const biggest = (thisResult.length >= values.length) ? thisResult : values;
-      values = [];
-      for (const bEntity of biggest) {
-        const lEntity = least.find(e => e.id === bEntity.id);
-        if (lEntity) {
-          const value = {
-            id: lEntity.id,
-            components: new Map(function*() { yield* bEntity.components; yield* lEntity.components; }())
-          };
-          values.push(value);
+    const andFn = (left: EntityEntry[], rigth: EntityEntry[]): EntityEntry[] => {
+      const values: EntityEntry[] = [];
+      for (const entry of left) {
+        const rIndex = rigth.findIndex(rE => rE.id === entry.id);
+        if (rIndex < 0) {
+          continue;
+        }
+
+        const found = rigth.splice(rIndex, 1); // this might be stupid 
+        if (found.length >= 1) {
+          values.push({
+            id: entry.id,
+            components: entry.components.concat(found[0].components)
+          });
         }
       }
       return values;
@@ -296,11 +298,11 @@ export class ECSManager {
           currentIndex: number): EntityEntry[] => {
             const existing = previousValues.find(n => n.id === value.entityId);
             if (!existing) {
-              let newEntry: EntityEntry = { id: value.entityId, components: new Map() };
-              newEntry.components.set(typeStr, currentIndex);
+              let newEntry: EntityEntry = { 
+                id: value.entityId, 
+                components: [{typeStr, index: currentIndex}] 
+              };
               previousValues.push(newEntry);
-            } else {
-              existing.components.set(typeStr, currentIndex);
             }
             return previousValues;
         }, []) ?? [];
@@ -426,8 +428,8 @@ export class ECSManager {
    */
   private createArgs(entry: EntityEntry): Component<object>[] {
     const args = [];
-    for (const [typeStr, index] of entry.components.entries()) {
-      const argComp = this.components.get(typeStr).unsafeGet(index);
+    for (const component of entry.components) {
+      const argComp = this.components.get(component.typeStr).unsafeGet(component.index);
       args.push(argComp);
     }
 

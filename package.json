@@ -8,7 +8,8 @@
     "doc": "typedoc",
     "clean": "rm -rf dist",
     "lint": "tslint --project tsconfig.json",
-    "build": "npm run lint && ttsc",
+    "build:prep": "tsc -p tsconfig-transformer.json",
+    "build": "npm run lint && npm run build:prep && ttsc",
     "test": "npm run build && jasmine-ts \"spec/**/*.spec.ts\""
   },
   "repository": {

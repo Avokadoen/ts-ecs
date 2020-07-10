@@ -20,16 +20,16 @@
         "jsx": "react",
         "allowJs": false,
         "plugins": [
-            { "transform": "./manager-endpoints.transformer.ts" },
+            { "transform": "./dist/manager-endpoints.transformer" },
         ]
     },
     "include": [
-        "manager-endpoints.transformer.ts",
         "index.ts", 
         "src", 
         "spec",
     ],
     "exclude": [
+        "manager-endpoints.transformer.ts",
         "node_modules",
         "dist",
     ],

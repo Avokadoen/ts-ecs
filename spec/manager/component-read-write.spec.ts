@@ -1,5 +1,5 @@
 import { ECSManager } from "../../src/ecs/manager";
-import { TestCompOne, TestCompFour } from "../utility";
+import { TestCompOne, TestCompFour, TestCompTwo } from "../utility";
 
 describe('Component read/write', () => {
     let manager: ECSManager;
@@ -10,7 +10,7 @@ describe('Component read/write', () => {
     });
 
     describe('AddComponent', () => {
-        it('Should succeed on ComponentIdentifier', () => {
+        it('Should succeed on simple', () => {
             expect(manager.createEntity().addComponent(TestCompOne.identifier, new TestCompOne()).entityId)
                 .toBe(0, "First entity was of unexpected value");
             // tslint:disable-next-line: no-any

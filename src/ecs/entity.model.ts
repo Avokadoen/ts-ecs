@@ -4,6 +4,10 @@ export interface Entity {
 
 export interface EntityEntry {
   id: number;
-  components: Map<string, number>;
+  components: ComponentEntry[];
 }
 
+export interface ComponentEntry {
+  typeStr: string;
+  index: number;
+}

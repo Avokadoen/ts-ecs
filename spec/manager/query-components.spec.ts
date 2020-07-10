@@ -18,12 +18,12 @@ describe('Query runtime components', () => {
             entities: [
                 {
                     id: 2,
-                    components: new Map()
+                    components: []
                 }
             ],
             sharedArgs: null
         };
-        expected.entities[0].components.set(TestCompTwo.identifier, 0);
+        expected.entities[0].components.push({ typeStr: TestCompTwo.identifier, index: 0});
 
         expect(manager.queryEntities(query)).toEqual(expected);
     });
@@ -43,20 +43,20 @@ describe('Query runtime components', () => {
             entities: [
                 {
                     id: 3,
-                    components: new Map()
+                    components: []
                 },
                 {
                     id: 5,
-                    components: new Map()
+                    components: []
                 }
             ],
             sharedArgs: null
         };
-        expected.entities[0].components.set(TestCompOne.identifier, 1);
-        expected.entities[0].components.set(TestCompThree.identifier, 0);
+        expected.entities[0].components.push({ typeStr: TestCompOne.identifier, index: 1 });
+        expected.entities[0].components.push({ typeStr: TestCompThree.identifier, index: 0 });
 
-        expected.entities[1].components.set(TestCompOne.identifier, 2);
-        expected.entities[1].components.set(TestCompThree.identifier, 2);
+        expected.entities[1].components.push({ typeStr: TestCompOne.identifier, index: 2 });
+        expected.entities[1].components.push({ typeStr: TestCompThree.identifier, index: 2 });
 
         expect(manager.queryEntities(query)).toEqual(expected);
     });
