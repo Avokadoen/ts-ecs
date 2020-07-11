@@ -1,5 +1,5 @@
 import {System, SystemFn} from './system.model';
-import {Entity, EntityEntry} from './entity.model';
+import {Entity, EntityEntry, ComponentEntry} from './entity.model';
 import {Component} from './component.model';
 import {EntityQueryResult, EscQuery, QueryNode, QueryToken, isQueryNode, QueryLeafNode, isQueryLeafNode} from './esc-query.model';
 import { DispatchSubject } from '../observer/dispatch-subject';
@@ -259,8 +259,15 @@ export class ECSManager {
     };
 
     const orReducer = (previousValues: EntityEntry[], value: EntityEntry) => {
-      if (!previousValues.find(n => n.id === value.id)) {
+      const index = previousValues.findIndex(n => n.id === value.id);
+      if (index < 0) {
         previousValues.push(value);
+      } else {
+        for (const comp of value.components) {
+          if (!previousValues[index].components.find(c => c === comp)) {
+            previousValues[index].components.push(comp);
+          }
+        }
       }
       return previousValues;
     };
@@ -296,13 +303,19 @@ export class ECSManager {
           previousValues: EntityEntry[], 
           value: Component<object>, 
           currentIndex: number): EntityEntry[] => {
-            const existing = previousValues.find(n => n.id === value.entityId);
-            if (!existing) {
+            const index = previousValues.findIndex(n => n.id === value.entityId);
+            const newComp = {typeStr, index: currentIndex};
+            if (index < 0) {
               let newEntry: EntityEntry = { 
                 id: value.entityId, 
-                components: [{typeStr, index: currentIndex}] 
+                components: [newComp] 
               };
               previousValues.push(newEntry);
+            } else {
+              const found = previousValues[index].components.find(c => c.index === newComp.index && c.typeStr === newComp.typeStr);
+              if (!found) {
+                previousValues[index].components.push(newComp);
+              }
             }
             return previousValues;
         }, []) ?? [];
@@ -311,9 +324,9 @@ export class ECSManager {
       }
     };
 
-    const findShared = (query: QueryNode | QueryLeafNode): QueryNode | null => {
+    const findShared = (query: QueryNode | QueryLeafNode): QueryNode | undefined => {
       if (!query || isQueryLeafNode(query)) {
-        return null;
+        return undefined;
       }
 
       if (query.token === QueryToken.SHARED) {
@@ -341,18 +354,28 @@ export class ECSManager {
     };
 
     const sharedNode = findShared(query);
-    const sharedLeafs = extractLeafNodes(sharedNode);
+    const sharedEntities = queryStep(sharedNode?.leftChild);
 
-    const sharedEntityEntries = sharedLeafs ? sharedLeafs.map(l => queryStep(l)) : null;
-    let sharedArgs: Component<object>[][] | null = null;
-    if (sharedEntityEntries) {
-      sharedArgs = [];
-      for (const entry of sharedEntityEntries) {
-        let compArgs: Component<object>[] = [];
-        for (const entity of entry) {
-          compArgs = compArgs.concat(this.createArgs(entity));
+    let sharedArgs: Component<object>[][] | undefined = undefined;
+    if (sharedEntities.length > 0) {
+      const compEntries = sharedEntities.map((entry: EntityEntry) => entry.components);
+      sharedArgs = new Array(compEntries[0].length);
+      const typeMap: string[] = [];
+      for (const entry of compEntries) {
+        for (const comp of entry) {
+          let index = typeMap.findIndex(t => t === comp.typeStr);
+          if (index < 0) {
+            index = typeMap.length;
+            typeMap.push(comp.typeStr);
+          }
+
+          if (!sharedArgs[index]) {
+            sharedArgs[index] = [this.components.get(comp.typeStr).unsafeGet(comp.index)];
+          } else {
+            sharedArgs[index] = sharedArgs[index].concat(this.components.get(comp.typeStr).unsafeGet(comp.index));
+          }
+
         }
-        sharedArgs.push(compArgs);
       }
     }
 

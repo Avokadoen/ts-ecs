@@ -8,7 +8,7 @@ describe('Query Entities', () => {
     let manager: ECSManager;
 
     const entitiesTransformer = (entities: EntityEntry[]): Entity[] => {
-        return entities.sort(sortFn).map(e => { return { id: e.id }; });
+        return entities.sort(sortFn).map((e: EntityEntry) => { return { id: e.id }; });
     };
 
     const sharedArgsTransformer = (args: Component<object>[][]): Entity[][] => {
@@ -106,8 +106,7 @@ describe('Query Entities', () => {
 
         const entities = manager.queryEntities(query).entities;
 
-        expect(entitiesTransformer(entities))
-        .toEqual([{ id: 2 }, { id: 3 }, { id: 4 }, { id: 5 }, { id: 6 }], "Query returned unexpected result");
+        expect(entitiesTransformer(entities)).toEqual([{ id: 2 }, { id: 3 }, { id: 4 }, { id: 5 }, { id: 6 }], "Query returned unexpected result");
     });
 
     it('Should succeed on "NOT" comp query entity', () => {
@@ -127,33 +126,31 @@ describe('Query Entities', () => {
         .toEqual([{ id: 4 }, { id: 6 }], "Query returned unexpected result");
     });
 
-    // Figure out if shared should care at all about AND
-    // it('Should succeed on "AND" and "SHARED" comp query entity', () => {
-    //     const query: QueryNode = {
-    //         token: QueryToken.OR,
-    //         leftChild: {
-    //             identifier: TestCompOne.identifier
-    //         },
-    //         rightChild: {
-    //             token: QueryToken.SHARED,
-    //             leftChild: {
-    //                 token: QueryToken.AND,
-    //                 leftChild: {
-    //                     identifier: TestCompFour.identifier
-    //                 },
-    //                 rightChild: {
-    //                     identifier: TestCompThree.identifier
-    //                 }
-    //             },
-    //         }
-    //     };
+    it('Should succeed on "AND" and "SHARED" comp query entity', () => {
+        const query: QueryNode = {
+            token: QueryToken.OR,
+            leftChild: {
+                typeStr: TestCompOne.identifier
+            },
+            rightChild: {
+                token: QueryToken.SHARED,
+                leftChild: {
+                    token: QueryToken.AND,
+                    leftChild: {
+                        typeStr: TestCompFour.identifier
+                    },
+                    rightChild: {
+                        typeStr: TestCompThree.identifier
+                    }
+                },
+            }
+        };
 
-    //     const result = manager.queryEntities(query);
-    //     console.log(result);
+        const result = manager.queryEntities(query);
 
-    //     expect(entitiesTransformer(result.entities)).toEqual([{ id: 0 }, { id: 3 }, { id: 5 }], "Query returned unexpected result");
-    //     expect(sharedArgsTransformer(result.sharedArgs)).toEqual([ [{ id: 6 }], [{ id: 6 }] ], "Query returned unexpected result");
-    // });
+        expect(entitiesTransformer(result.entities)).toEqual([{ id: 0 }, { id: 3 }, { id: 5 }], "Query returned unexpected result");
+        expect(sharedArgsTransformer(result.sharedArgs)).toEqual([ [{ id: 6 }], [{ id: 6 }] ], "Query returned unexpected result");
+    });
 
     it('Should succeed on "OR" and "SHARED" comp query entity', () => {
         const query: QueryNode = {

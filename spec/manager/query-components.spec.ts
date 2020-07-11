@@ -21,7 +21,7 @@ describe('Query runtime components', () => {
                     components: []
                 }
             ],
-            sharedArgs: null
+            sharedArgs: undefined
         };
         expected.entities[0].components.push({ typeStr: TestCompTwo.identifier, index: 0});
 
@@ -50,7 +50,7 @@ describe('Query runtime components', () => {
                     components: []
                 }
             ],
-            sharedArgs: null
+            sharedArgs: undefined
         };
         expected.entities[0].components.push({ typeStr: TestCompOne.identifier, index: 1 });
         expected.entities[0].components.push({ typeStr: TestCompThree.identifier, index: 0 });
