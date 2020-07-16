@@ -152,6 +152,20 @@ describe('Transformers', () => {
                 // tslint:disable-next-line: no-any
                 expect((optComponents as any).defaultValue).toBe(complexDefaultValue);
             });
+
+            it('Uses override stride if supplied', () => {
+                const manager = new ECSManager();
+
+                const overrideStride = 1;
+    
+                registerComponentType(manager, defaultValue, overrideStride);
+
+                 // tslint:disable-next-line: no-any
+                 const optComponents = (manager as any).components.get('Optimus') as ComponentPool<Optimus>; 
+    
+                 // tslint:disable-next-line: no-any
+                 expect((optComponents as any).stride).toBe(overrideStride);
+            });
         });
     
             
