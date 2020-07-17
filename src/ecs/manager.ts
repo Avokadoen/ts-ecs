@@ -165,14 +165,15 @@ export class ECSManager {
    * Used to preallocate storage for a given component type
    * avoid calling this in a game loop
    * @param typeStr the type of the component as a string 
-   * @param defaultValue 
+   * @param defaultValue the value of any component of this type that does not get an override value on add
+   * @param cacheStride how many allocations that should be done for each expand
    */
-  public registerComponentType<T extends object>(typeStr: string, defaultValue: T) {
+  public registerComponentType<T extends object>(typeStr: string, defaultValue: T, cacheStride: number = 20) {
     if (this.components.has(typeStr)) {
       throw new EcsError(`Component type ${typeStr} has already been registered`);
     }
 
-    this.components.set(typeStr, new ComponentPool<T>(defaultValue));
+    this.components.set(typeStr, new ComponentPool<T>(defaultValue, cacheStride));
   }
 
   /**

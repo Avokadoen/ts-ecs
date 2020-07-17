@@ -151,10 +151,17 @@ function visitNode(node: ts.Node, program: ts.Program): ts.Node | undefined {
                 }
             }
 
-            callArguments = ts.createNodeArray([
+            const callArrs = [
                 createLiteral(typeStr),
-                arg
-            ]);
+                arg,
+            ];
+
+            if (node.arguments.length > 2) {
+                callArrs.push(node.arguments[2]);
+            }
+
+            callArguments = ts.createNodeArray(callArrs);
+
             break;
         case ActiveNodeKind.AddComponent:
             let addTypeStr: string;

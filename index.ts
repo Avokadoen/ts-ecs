@@ -33,7 +33,7 @@ export declare function registerEvent(manager: ECSManager, system: SystemFn<Even
  * @param manager manager to register to
  * @param defaultValue the default value you want for any new component you instantiate of this type
  */
-export declare function registerComponentType<T extends object>(manager: ECSManager, defaultValue: T): void;
+export declare function registerComponentType<T extends object>(manager: ECSManager, defaultValue: T, cacheStride?: number): void;
 
 /**
  * A semi typesafe wrapper to manager's {@link ECSManager.addComponent}
