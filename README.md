@@ -8,7 +8,7 @@ npm package can be found [here](https://www.npmjs.com/package/naive-ts-ecs)
 - Be sure to checkout the wave shooter demo for a practical example
 - Make sure to install the package, preferably through npm, but you could use the master branch if you want to, although expect breaking changes.
 
-This is a WIP project and things are bound to change. I strive to make it as user friendly as possible, but there is a lot to reach that goal. That being said. This is how you can use 1.4:
+This is a WIP project and things are bound to change. I strive to make it as user friendly as possible, but there is a lot of work to do before i reach that goal. That being said. This is how you can use 1.4:
 
 ```typescript
 // create some types that represent components
@@ -129,4 +129,5 @@ npm test
 ```
 
 # Examples
-You can check out my simple wave shooter implementation [here](https://github.com/Avokadoen/ts-ecs-waveshoot)
+- You can check out my simple wave shooter implementation [here](https://github.com/Avokadoen/ts-ecs-waveshoot)
+- Circle demo [circle demo](https://github.com/Avokadoen/ts-ecs-circles-demo)

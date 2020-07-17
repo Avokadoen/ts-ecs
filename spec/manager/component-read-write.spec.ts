@@ -1,5 +1,6 @@
 import { ECSManager } from "../../src/ecs/manager";
 import { TestCompOne, TestCompFour, TestCompTwo } from "../utility";
+import { EcsError } from "../../src/errors/ecs-error";
 
 describe('Component read/write', () => {
     let manager: ECSManager;
@@ -43,6 +44,16 @@ describe('Component read/write', () => {
 
             const testCompAccessed = manager.accessComponentData(999, TestCompFour.identifier) as TestCompFour;
             expect(testCompAccessed).toBeUndefined('Got component on invalid access');
+        });
+    });
+
+    describe('Register component', () => {
+        it('Should fail on register component twice', () => {
+            try {
+                manager.registerComponentType(TestCompOne.identifier, new TestCompOne());
+            } catch(e) {
+                expect(e.message).toBe(`Component type ${TestCompOne.identifier} has already been registered`);
+            }
         });
     });
 });

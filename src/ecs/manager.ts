@@ -6,6 +6,8 @@ import { DispatchSubject } from '../observer/dispatch-subject';
 import { createQueryFromIdentifierList } from './query-builder';
 import { ComponentPool } from '../pool/component-pool';
 import { isNumber } from 'util';
+import { UnrecognizedComponentError } from '../errors/unrecognized-component-error';
+import { EcsError } from '../errors/ecs-error';
 
 /**
  * Builder for entities. Enables end user to chain operations.
@@ -167,7 +169,7 @@ export class ECSManager {
    */
   public registerComponentType<T extends object>(typeStr: string, defaultValue: T) {
     if (this.components.has(typeStr)) {
-      return;
+      throw new EcsError(`Component type ${typeStr} has already been registered`);
     }
 
     this.components.set(typeStr, new ComponentPool<T>(defaultValue));
@@ -188,13 +190,13 @@ export class ECSManager {
     };
 
     if (!this.components.has(typeStr)) {
-      return; // TODO: errorhandling
+      throw new UnrecognizedComponentError(`Can not add a component of type ${typeStr} before it has been registered`);
     }
 
     const components = this.components.get(typeStr);
 
     if (components?.find(c => c.entityId === entityId)) {
-      return; // TODO: errorhandling
+      throw new EcsError(`Can not find entity with id ${entityId}`);
     }
 
     if (this.isRunningSystems) {
@@ -226,7 +228,12 @@ export class ECSManager {
       return;
     }
 
-    this.components.get(typeStr).remove(entityId);
+    const typeComponents = this.components.get(typeStr);
+    if (!typeComponents) {
+      throw new UnrecognizedComponentError(`Can't remove component of type that does not exist`);
+    }
+
+    typeComponents.remove(entityId);
 
     this.invalidateQueryResults(typeStr);
     return builder ?? new EntityBuilder(entityId, this);
@@ -290,6 +297,8 @@ export class ECSManager {
             return qLResult.filter(entity => !qRResult.find((oe: Entity) => oe.id == entity.id));
           case QueryToken.SHARED: 
             return [];
+          default: 
+            throw new EcsError(`query got unrecognized token ${query.token}`);
         }
       } else {
         const typeStr = query.typeStr;
