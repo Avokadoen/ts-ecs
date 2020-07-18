@@ -194,10 +194,13 @@ export class ECSManager {
       throw new UnrecognizedComponentError(`Can not add a component of type ${typeStr} before it has been registered`);
     }
 
-    const components = this.components.get(typeStr);
-
-    if (components?.find(c => c.entityId === entityId)) {
+    if (!this.entities.find(e => e.id === entityId)) {
       throw new EcsError(`Can not find entity with id ${entityId}`);
+    }
+
+    const components = this.components.get(typeStr);
+    if (components?.find(c => c.entityId === entityId)) {
+      throw new EcsError(`Component with id '${entityId}' already exist`);
     }
 
     if (this.isRunningSystems) {
